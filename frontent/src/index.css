@@ -1,3 +1,21 @@
 @import "tailwindcss";
 
+/* Custom theme */
+@theme {
+  --color-primary: #22C55E;
+  --color-primary-dark: #16A34A;
+  --color-dark-bg: #0F172A;
+  --color-dark-card: #1E293B;
+  --color-dark-border: #334155;
+  --color-dark-muted: #94A3B8;
+}
 
+/* Dark mode variant */
+@variant dark (&:where(.dark, .dark *));
+
+/* Base styles */
+@layer base {
+  body {
+    @apply antialiased transition-colors duration-300;
+  }
+}

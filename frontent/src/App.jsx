@@ -1,25 +1,28 @@
-import React from "react";
+import React from 'react';
+import { Routes, Route, useLocation } from 'react-router-dom';
+import Navbar from './components/layout/Navbar';
+import Footer from './components/layout/Footer';
+import Home from './pages/Home';
+import Cart from './pages/Cart';
+import SignIn from './pages/SignIn';
 
-const App = () => {
+function App() {
+  const location = useLocation();
+  const hideNavFooter = location.pathname === '/signin';
+
   return (
-    <div className="min-h-screen bg-green-50 flex items-center justify-center">
-      <div className="bg-white shadow-xl rounded-2xl p-10 text-center max-w-md">
-        
-        <h1 className="text-3xl font-bold text-green-700 mb-4">
-          Farmers Marketplace
-        </h1>
-
-        <p className="text-gray-600 mb-6">
-          Connect farmers directly with customers in a transparent and trusted way.
-        </p>
-
-        <button className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-semibold transition duration-300">
-          Get Started
-        </button>
-
-      </div>
+    <div className="flex flex-col min-h-screen">
+      {!hideNavFooter && <Navbar />}
+      <main className="flex-grow">
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/cart" element={<Cart />} />
+          <Route path="/signin" element={<SignIn />} />
+        </Routes>
+      </main>
+      {!hideNavFooter && <Footer />}
     </div>
   );
-};
+}
 
 export default App;
