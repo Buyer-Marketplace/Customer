@@ -30,7 +30,7 @@ const Home = () => {
       id: 2,
       name: "Sweet Summer Corn",
       type: "Seasonal variety",
-      price: "$8.00 / 4-pack",
+      price: "Ksh 800.00 / 4-pack",
       daysLeft: 24,
       progress: 30,
       desc: "Blistering aromas with a crisp, mildly sweet flavor. Perfect for late-summer grilling.",
