@@ -1,54 +1,65 @@
-import React from 'react';
+import React, { forwardRef } from 'react';
 
-const Input = ({ 
-  type = 'text', 
-  placeholder, 
-  value, 
-  onChange, 
+const Input = forwardRef(({
+  label,
+  type = 'text',
+  error,
+  icon: Icon,
   className = '',
-  icon,
-  size = 'md',
-  error = false,
-  ...props 
-}) => {
-  // Responsive sizes
-  const sizes = {
-    sm: 'px-2 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm',
-    md: 'px-3 sm:px-4 py-1.5 sm:py-2 text-sm sm:text-base',
-    lg: 'px-4 sm:px-5 py-2 sm:py-2.5 text-base sm:text-lg'
-  };
-  
-  // Icon padding adjustment
-  const iconPadding = {
-    sm: icon ? 'pl-7 sm:pl-8' : '',
-    md: icon ? 'pl-8 sm:pl-9' : '',
-    lg: icon ? 'pl-9 sm:pl-10' : ''
-  };
-  
-  // State styles
-  const stateStyles = error 
-    ? 'border-red-500 focus:ring-red-500' 
-    : 'border-light-border dark:border-dark-border focus:ring-primary';
-  
+  required = false,
+  helperText,
+  ...props
+}, ref) => {
   return (
-    <div className="relative w-full">
-      {icon && (
-        <div className="absolute inset-y-0 left-0 pl-2 sm:pl-3 flex items-center pointer-events-none">
-          <span className="text-gray-400 dark:text-dark-muted text-sm sm:text-base">
-            {icon}
-          </span>
-        </div>
+    <div className="w-full">
+      {label && (
+        <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
+          {label}
+          {required && <span className="text-red-500 ml-1">*</span>}
+        </label>
       )}
-      <input
-        type={type}
-        placeholder={placeholder}
-        value={value}
-        onChange={onChange}
-        className={`w-full rounded-full border bg-white dark:bg-dark-card text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-dark-muted focus:outline-none focus:ring-2 focus:border-transparent transition-all duration-200 ${sizes[size]} ${iconPadding[size]} ${stateStyles} ${className}`}
-        {...props}
-      />
+      <div className="relative">
+        {Icon && (
+          <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+            <Icon className="h-5 w-5 text-gray-400 dark:text-gray-500" />
+          </div>
+        )}
+        <input
+          ref={ref}
+          type={type}
+          className={`
+            w-full px-4 py-2.5 
+            border-2 rounded-xl
+            focus:ring-2 focus:ring-primary-500 focus:border-primary-500 
+            outline-none transition-all duration-200
+            bg-white dark:bg-dark-card
+            placeholder:text-gray-400 dark:placeholder:text-gray-600
+            ${Icon ? 'pl-11' : ''}
+            ${error 
+              ? 'border-red-300 focus:border-red-500 focus:ring-red-200 dark:border-red-700' 
+              : 'border-gray-200 dark:border-dark-border hover:border-gray-300 dark:hover:border-gray-600'
+            }
+            ${className}
+          `}
+          aria-invalid={error ? 'true' : 'false'}
+          {...props}
+        />
+      </div>
+      {error && (
+        <p className="mt-1.5 text-sm text-red-600 dark:text-red-400 flex items-center gap-1">
+          <span>⚠️</span>
+          {error}
+        </p>
+      )}
+      {helperText && !error && (
+        <p className="mt-1.5 text-sm text-gray-500 dark:text-gray-400">
+          {helperText}
+        </p>
+      )}
     </div>
   );
-};
+});
+
+Input.displayName = 'Input';
 
 export default Input;

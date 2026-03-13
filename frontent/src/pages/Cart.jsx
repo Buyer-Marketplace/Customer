@@ -1,107 +1,116 @@
-import React, { useState } from 'react';
-import Container from '../components/layout/Container';
-import Card from '../components/ui/Card';
-import CartItem from '../components/features/CartItem';
-import OrderSummary from '../components/features/OrderSummary';
-import ProductCard from '../components/features/ProductCard';
-import { cartItems as initialCartItems, products } from '../data/products';
+import React from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
+import CartItem from '../components/cart/CartItem';
+import CartSummary from '../components/cart/CartSummary';
+import Button from '../components/ui/Button';
+import { IoCartOutline, IoArrowBack } from 'react-icons/io5';
 
 const Cart = () => {
-  const [cartItems, setCartItems] = useState(initialCartItems);
+  const navigate = useNavigate();
+  const { cartItems, cartTotal, itemCount, removeFromCart, updateQuantity, clearCart } = useCart();
+  const { isAuthenticated } = useAuth();
 
-  const handleUpdateQuantity = (id, newQuantity) => {
-    if (newQuantity === 0) {
-      handleRemoveItem(id);
+  const handleCheckout = () => {
+    if (!isAuthenticated) {
+      navigate('/signin', { state: { from: '/checkout' } });
     } else {
-      setCartItems(items =>
-        items.map(item =>
-          item.id === id ? { ...item, quantity: newQuantity } : item
-        )
-      );
+      navigate('/checkout');
     }
   };
 
-  const handleRemoveItem = (id) => {
-    setCartItems(items => items.filter(item => item.id !== id));
-  };
+  if (cartItems.length === 0) {
+    return (
+      <div className="min-h-screen bg-gray-50 py-12">
+        <div className="container-custom">
+          <div className="max-w-2xl mx-auto text-center">
+            <div className="bg-white rounded-lg shadow-md p-12">
+              <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <IoCartOutline className="text-gray-400" size={48} />
+              </div>
+              <h1 className="text-2xl font-bold text-gray-900 mb-4">Your Cart is Empty</h1>
+              <p className="text-gray-600 mb-8">
+                Looks like you haven't added any products to your cart yet.
+              </p>
+              <Link to="/products">
+                <Button variant="primary" size="lg">
+                  Start Shopping
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-light-bg dark:bg-dark-bg py-12 transition-colors duration-300">
-      <Container>
-        <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-gray-900 dark:text-white mb-8">
-          Your Cart
-        </h1>
+    <div className="min-h-screen bg-gray-50 py-12">
+      <div className="container-custom">
+        {/* Header */}
+        <div className="mb-8">
+          <Link to="/products" className="inline-flex items-center text-gray-600 hover:text-primary-600 mb-4">
+            <IoArrowBack className="mr-2" />
+            Continue Shopping
+          </Link>
+          <h1 className="text-3xl font-bold text-gray-900">Shopping Cart</h1>
+          <p className="text-gray-600 mt-2">
+            You have {itemCount} {itemCount === 1 ? 'item' : 'items'} in your cart
+          </p>
+        </div>
 
-        <div className="grid lg:grid-cols-3 gap-8">
-          {/* Left Column - Cart Items */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Cart Items */}
           <div className="lg:col-span-2">
-            <Card>
-              {cartItems.length > 0 ? (
-                <div className="divide-y divide-light-border dark:divide-dark-border">
-                  {cartItems.map(item => (
-                    <CartItem
-                      key={item.id}
-                      item={item}
-                      onUpdateQuantity={handleUpdateQuantity}
-                      onRemove={handleRemoveItem}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-12">
-                  <svg className="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                  </svg>
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                    Your cart is empty
-                  </h3>
-                  <p className="text-gray-600 dark:text-dark-muted mb-6">
-                    Start adding some fresh produce to your order!
-                  </p>
-                  <a
-                    href="/"
-                    className="inline-flex items-center text-primary hover:text-primary-dark font-medium"
-                  >
-                    Continue Shopping
-                    <svg className="w-5 h-5 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </a>
-                </div>
-              )}
-            </Card>
+            <div className="bg-white rounded-lg shadow-md p-6">
+              {cartItems.map((item) => (
+                <CartItem
+                  key={item.id}
+                  item={item}
+                  onUpdateQuantity={updateQuantity}
+                  onRemove={removeFromCart}
+                />
+              ))}
+
+              {/* Cart Actions */}
+              <div className="mt-6 pt-6 border-t flex justify-between items-center">
+                <button
+                  onClick={clearCart}
+                  className="text-red-600 hover:text-red-700 text-sm font-medium"
+                >
+                  Clear Cart
+                </button>
+                <Link to="/products" className="text-primary-600 hover:text-primary-700 text-sm font-medium">
+                  Add More Items
+                </Link>
+              </div>
+            </div>
           </div>
 
-          {/* Right Column - Order Summary */}
+          {/* Cart Summary */}
           <div className="lg:col-span-1">
-            <OrderSummary items={cartItems} />
+            <CartSummary
+              items={itemCount}
+              subtotal={cartTotal}
+              shipping={0} // Free shipping
+              tax={cartTotal * 0.16} // 16% VAT
+            />
           </div>
         </div>
 
-        {/* Others are pre-ordering section */}
-        {cartItems.length > 0 && (
-          <section className="mt-16">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-8">
-              Others are pre-ordering
-            </h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {products.slice(0, 4).map(product => (
-                <div key={product.id} className="text-center">
-                  <img
-                    src={product.image}
-                    alt={product.name}
-                    className="w-full h-32 object-cover rounded-lg mb-2"
-                  />
-                  <h3 className="text-sm font-medium text-gray-900 dark:text-white">
-                    {product.name}
-                  </h3>
-                  <p className="text-primary text-sm">${product.price}/{product.unit}</p>
-                </div>
-              ))}
+        {/* Recently Viewed */}
+        <div className="mt-12">
+          <h2 className="text-xl font-semibold mb-4">Recently Viewed</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            {/* This would be populated with recently viewed products */}
+            <div className="bg-white rounded-lg shadow p-3 text-center">
+              <div className="h-16 w-16 bg-gray-200 rounded-full mx-auto mb-2"></div>
+              <p className="text-sm font-medium">Sample Product</p>
             </div>
-          </section>
-        )}
-      </Container>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

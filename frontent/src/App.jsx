@@ -1,27 +1,50 @@
-import React from 'react';
-import { Routes, Route, useLocation } from 'react-router-dom';
-import Navbar from './components/layout/Navbar';
-import Footer from './components/layout/Footer';
-import Home from './pages/Home';
-import Cart from './pages/Cart';
-import SignIn from './pages/SignIn';
+import { Toaster } from 'react-hot-toast';
+import { AuthProvider } from './context/AuthContext';
+import { CartProvider } from './context/CartContext';
+import { WishlistProvider } from './context/WishlistContext';
+import { ProductProvider } from './context/ProductContext';
+import { ThemeProvider } from './context/ThemeContext';
+import AppRoutes from './routes/AppRoutes';
 
 function App() {
-  const location = useLocation();
-  const hideNavFooter = location.pathname === '/signin';
-
   return (
-    <div className="flex flex-col min-h-screen">
-      {!hideNavFooter && <Navbar />}
-      <main className="flex-grow">
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/cart" element={<Cart />} />
-          <Route path="/signin" element={<SignIn />} />
-        </Routes>
-      </main>
-      {!hideNavFooter && <Footer />}
-    </div>
+    <ThemeProvider>
+      <AuthProvider>
+        <ProductProvider>
+          <CartProvider>
+            <WishlistProvider>
+              <div className="min-h-screen bg-gray-50 dark:bg-dark-bg transition-colors duration-300">
+                <AppRoutes />
+                <Toaster 
+                  position="top-right"
+                  toastOptions={{
+                    duration: 4000,
+                    style: {
+                      background: '#363636',
+                      color: '#fff',
+                    },
+                    success: {
+                      duration: 3000,
+                      iconTheme: {
+                        primary: '#22c55e',
+                        secondary: '#fff',
+                      },
+                    },
+                    error: {
+                      duration: 4000,
+                      iconTheme: {
+                        primary: '#ef4444',
+                        secondary: '#fff',
+                      },
+                    },
+                  }}
+                />
+              </div>
+            </WishlistProvider>
+          </CartProvider>
+        </ProductProvider>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
 
