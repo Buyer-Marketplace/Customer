@@ -1,13 +1,28 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { orderApi } from '../api/orderApi';
+import { mockOrders, mockDataUtils } from '../data/mockData';
 import { formatCurrency } from '../utils/formatCurrency';
 import { formatDate } from '../utils/formatDate';
 import Button from '../components/ui/Button';
 import Badge from '../components/ui/Badge';
 import Loader from '../components/ui/Loader';
 import toast from 'react-hot-toast';
-import { IoArrowBack, IoPrint, IoReceipt } from 'react-icons/io5';
+import { 
+  IoArrowBack, 
+  IoPrint, 
+  IoReceipt,
+  IoLocationOutline,
+  IoCallOutline,
+  IoMailOutline,
+  IoLeaf
+} from 'react-icons/io5';
+import AOS from 'aos';
+import 'aos/dist/aos.css';
+
+// Header image
+const headerImage = "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&q=80&w=1600";
+const headerGradient = "bg-gradient-to-b from-transparent via-green-950/30 to-green-950";
 
 const OrderDetails = () => {
   const { id } = useParams();
@@ -18,13 +33,35 @@ const OrderDetails = () => {
   const [cancelling, setCancelling] = useState(false);
 
   useEffect(() => {
+    AOS.init({
+      duration: 1000,
+      once: false,
+      mirror: true,
+      offset: 50,
+    });
+  }, []);
+
+  useEffect(() => {
     fetchOrder();
   }, [id]);
 
   const fetchOrder = async () => {
     setLoading(true);
     try {
-      const data = await orderApi.getOrderById(id);
+      let data;
+      try {
+        const response = await orderApi.getOrderById(id);
+        data = response.data || response;
+      } catch (err) {
+        console.log('Using mock order data');
+        data = mockOrders.find(o => o.id === id) || {
+          id: id,
+          status: 'pending',
+          createdAt: new Date().toISOString(),
+          items: [],
+          total: 0,
+        };
+      }
       setOrder(data);
     } catch (err) {
       setError(err.message);
@@ -42,7 +79,7 @@ const OrderDetails = () => {
     try {
       await orderApi.cancelOrder(id);
       toast.success('Order cancelled successfully');
-      fetchOrder(); // Refresh order data
+      fetchOrder();
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to cancel order');
     } finally {
@@ -50,16 +87,19 @@ const OrderDetails = () => {
     }
   };
 
+  const handlePrint = () => {
+    window.print();
+  };
+
   const getStatusColor = (status) => {
     switch (status?.toLowerCase()) {
       case 'pending':
         return 'warning';
       case 'confirmed':
-        return 'info';
       case 'processing':
-        return 'primary';
+        return 'info';
       case 'shipped':
-        return 'secondary';
+        return 'primary';
       case 'delivered':
         return 'success';
       case 'cancelled':
@@ -71,7 +111,7 @@ const OrderDetails = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen bg-green-950 flex items-center justify-center">
         <Loader size="lg" />
       </div>
     );
@@ -79,12 +119,15 @@ const OrderDetails = () => {
 
   if (error || !order) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Order Not Found</h2>
-          <p className="text-gray-600 mb-4">The order you're looking for doesn't exist.</p>
-          <Link to="/orders" className="text-primary-600 hover:text-primary-700">
-            Back to Orders
+      <div className="min-h-screen bg-green-950 flex items-center justify-center">
+        <div className="text-center bg-green-900/30 backdrop-blur-sm rounded-3xl p-12 border border-green-400/20">
+          <IoLeaf className="text-green-400 text-6xl mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-white mb-2">Order Not Found</h2>
+          <p className="text-green-200 mb-6">The order you're looking for doesn't exist.</p>
+          <Link to="/orders">
+            <Button variant="primary" className="bg-green-600 hover:bg-green-700 text-white">
+              Back to Orders
+            </Button>
           </Link>
         </div>
       </div>
@@ -92,19 +135,42 @@ const OrderDetails = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12">
-      <div className="container-custom max-w-4xl">
+    <div className="min-h-screen bg-green-950">
+      {/* Header Image Section */}
+      <div className="relative w-full h-80 overflow-hidden">
+        <img 
+          src={headerImage}
+          alt="Order Details"
+          className="w-full h-full object-cover"
+        />
+        <div className={`absolute inset-0 ${headerGradient}`}></div>
+        
+        {/* Header Content */}
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="text-center text-white" data-aos="fade-down">
+            <h1 className="text-5xl md:text-6xl font-bold mb-4">ORDER DETAILS</h1>
+            <p className="text-xl text-green-200 max-w-2xl px-4">
+              Track and manage your order #{order.id}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className="container-custom py-8 max-w-4xl">
         {/* Header */}
-        <div className="mb-6">
-          <Link to="/orders" className="inline-flex items-center text-gray-600 hover:text-primary-600 mb-4">
+        <div className="mb-6" data-aos="fade-right">
+          <Link to="/orders" className="inline-flex items-center text-green-300 hover:text-green-100 bg-green-950/50 backdrop-blur-sm px-4 py-2 rounded-full border border-green-400/20">
             <IoArrowBack className="mr-2" />
             Back to Orders
           </Link>
-          
+        </div>
+
+        {/* Order Header Card */}
+        <div className="bg-green-900/30 backdrop-blur-sm rounded-3xl p-6 border border-green-400/20 mb-6" data-aos="fade-up">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Order #{order.id}</h1>
-              <p className="text-gray-600 mt-1">
+              <h2 className="text-2xl font-bold text-white mb-2">Order #{order.id}</h2>
+              <p className="text-green-300">
                 Placed on {formatDate(order.createdAt)}
               </p>
             </div>
@@ -113,7 +179,8 @@ const OrderDetails = () => {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => window.print()}
+                onClick={handlePrint}
+                className="border-2 border-green-400 text-green-300 hover:bg-green-800/30"
               >
                 <IoPrint className="mr-2" />
                 Print
@@ -134,38 +201,38 @@ const OrderDetails = () => {
 
         <div className="space-y-6">
           {/* Order Status */}
-          <div className="bg-white rounded-lg shadow-md p-6">
+          <div className="bg-green-900/30 backdrop-blur-sm rounded-3xl p-6 border border-green-400/20" data-aos="fade-up">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-lg font-semibold mb-2">Order Status</h2>
+                <h3 className="text-lg font-semibold text-white mb-2">Order Status</h3>
                 <Badge variant={getStatusColor(order.status)} size="lg">
                   {order.status}
                 </Badge>
               </div>
-              <IoReceipt className="text-gray-400" size={32} />
+              <IoReceipt className="text-green-400" size={32} />
             </div>
 
             {/* Status Timeline */}
-            {order.timeline && (
+            {order.timeline && order.timeline.length > 0 && (
               <div className="mt-6">
                 <div className="relative">
                   {order.timeline.map((event, index) => (
                     <div key={index} className="flex items-start mb-4 last:mb-0">
                       <div className="relative">
                         <div className={`w-3 h-3 rounded-full mt-1.5 ${
-                          event.completed ? 'bg-green-500' : 'bg-gray-300'
+                          event.completed ? 'bg-green-400' : 'bg-green-700'
                         }`} />
                         {index < order.timeline.length - 1 && (
                           <div className={`absolute top-4 left-1.5 w-0.5 h-12 -translate-x-1/2 ${
-                            event.completed ? 'bg-green-500' : 'bg-gray-300'
+                            event.completed ? 'bg-green-400/50' : 'bg-green-700/50'
                           }`} />
                         )}
                       </div>
                       <div className="ml-4">
-                        <p className="font-medium">{event.status}</p>
-                        <p className="text-sm text-gray-600">{event.date}</p>
+                        <p className="font-medium text-white">{event.status}</p>
+                        <p className="text-sm text-green-300">{event.date}</p>
                         {event.note && (
-                          <p className="text-sm text-gray-500 mt-1">{event.note}</p>
+                          <p className="text-sm text-green-200/70 mt-1">{event.note}</p>
                         )}
                       </div>
                     </div>
@@ -176,33 +243,33 @@ const OrderDetails = () => {
           </div>
 
           {/* Order Items */}
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-lg font-semibold mb-4">Order Items</h2>
+          <div className="bg-green-900/30 backdrop-blur-sm rounded-3xl p-6 border border-green-400/20" data-aos="fade-up">
+            <h3 className="text-lg font-semibold text-white mb-4">Order Items</h3>
             
             <div className="space-y-4">
-              {order.items.map((item) => (
-                <div key={item.id} className="flex items-center space-x-4 py-2 border-b last:border-b-0">
+              {order.items && order.items.map((item) => (
+                <div key={item.id} className="flex items-center space-x-4 py-2 border-b border-green-800 last:border-b-0">
                   <img
-                    src={item.product.images?.[0] || 'https://via.placeholder.com/80x80'}
-                    alt={item.product.name}
-                    className="w-20 h-20 object-cover rounded-lg"
+                    src={item.product?.images?.[0] || item.image || 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=80&h=80'}
+                    alt={item.product?.name || item.name}
+                    className="w-20 h-20 object-cover rounded-xl"
                   />
                   <div className="flex-1">
-                    <Link to={`/products/${item.product.id}`} className="hover:text-primary-600">
-                      <h3 className="font-semibold">{item.product.name}</h3>
+                    <Link to={`/products/${item.product?.id || item.productId}`} className="hover:text-green-300">
+                      <h4 className="font-semibold text-white">{item.product?.name || item.name}</h4>
                     </Link>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-green-300">
                       Quantity: {item.quantity} × {formatCurrency(item.price)}
                     </p>
-                    {item.product.farmer && (
-                      <p className="text-sm text-gray-500">
+                    {item.product?.farmer && (
+                      <p className="text-sm text-green-200/70">
                         Farmer: {item.product.farmer.farmName || item.product.farmer.name}
                       </p>
                     )}
                   </div>
                   <div className="text-right">
-                    <p className="font-semibold text-primary-600">
-                      {formatCurrency(item.subtotal)}
+                    <p className="font-semibold text-green-400">
+                      {formatCurrency(item.subtotal || item.price * item.quantity)}
                     </p>
                   </div>
                 </div>
@@ -211,51 +278,63 @@ const OrderDetails = () => {
           </div>
 
           {/* Shipping Information */}
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-lg font-semibold mb-4">Shipping Information</h2>
+          <div className="bg-green-900/30 backdrop-blur-sm rounded-3xl p-6 border border-green-400/20" data-aos="fade-up">
+            <h3 className="text-lg font-semibold text-white mb-4">Shipping Information</h3>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <h3 className="font-medium text-gray-700 mb-2">Delivery Address</h3>
-                <p className="text-gray-600">{order.deliveryAddress}</p>
+                <h4 className="font-medium text-green-300 mb-2 flex items-center">
+                  <IoLocationOutline className="mr-2" />
+                  Delivery Address
+                </h4>
+                <p className="text-white">{order.deliveryAddress}</p>
               </div>
               
               <div>
-                <h3 className="font-medium text-gray-700 mb-2">Contact Information</h3>
-                <p className="text-gray-600">{order.contactInfo?.name}</p>
-                <p className="text-gray-600">{order.contactInfo?.email}</p>
-                <p className="text-gray-600">{order.contactInfo?.phone}</p>
+                <h4 className="font-medium text-green-300 mb-2">Contact Information</h4>
+                <p className="text-white flex items-center">
+                  <IoPersonOutline className="mr-2 text-green-400" />
+                  {order.contactInfo?.name}
+                </p>
+                <p className="text-white flex items-center">
+                  <IoMailOutline className="mr-2 text-green-400" />
+                  {order.contactInfo?.email}
+                </p>
+                <p className="text-white flex items-center">
+                  <IoCallOutline className="mr-2 text-green-400" />
+                  {order.contactInfo?.phone}
+                </p>
               </div>
             </div>
 
             {order.trackingNumber && (
               <div className="mt-4">
-                <h3 className="font-medium text-gray-700 mb-2">Tracking Number</h3>
-                <p className="text-primary-600">{order.trackingNumber}</p>
+                <h4 className="font-medium text-green-300 mb-2">Tracking Number</h4>
+                <p className="text-green-400 font-mono">{order.trackingNumber}</p>
               </div>
             )}
           </div>
 
           {/* Payment Information */}
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-lg font-semibold mb-4">Payment Information</h2>
+          <div className="bg-green-900/30 backdrop-blur-sm rounded-3xl p-6 border border-green-400/20" data-aos="fade-up">
+            <h3 className="text-lg font-semibold text-white mb-4">Payment Information</h3>
             
             <div className="space-y-3">
               <div className="flex justify-between">
-                <span className="text-gray-600">Payment Method</span>
-                <span className="font-medium">{order.paymentMethod}</span>
+                <span className="text-green-300">Payment Method</span>
+                <span className="font-medium text-white">{order.paymentMethod || 'M-Pesa'}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600">Payment Status</span>
+                <span className="text-green-300">Payment Status</span>
                 <Badge variant={order.paymentStatus === 'paid' ? 'success' : 'warning'}>
-                  {order.paymentStatus}
+                  {order.paymentStatus || 'pending'}
                 </Badge>
               </div>
-              <div className="border-t pt-3 mt-3">
+              <div className="border-t border-green-700 pt-3 mt-3">
                 <div className="flex justify-between font-bold">
-                  <span>Total Paid</span>
-                  <span className="text-primary-600 text-xl">
-                    {formatCurrency(order.total)}
+                  <span className="text-white">Total Paid</span>
+                  <span className="text-green-400 text-xl">
+                    {formatCurrency(order.total || order.grandTotal || 0)}
                   </span>
                 </div>
               </div>
@@ -263,12 +342,12 @@ const OrderDetails = () => {
           </div>
 
           {/* Need Help? */}
-          <div className="bg-earth-50 rounded-lg p-6 text-center">
-            <h3 className="font-semibold text-lg mb-2">Need Help With Your Order?</h3>
-            <p className="text-gray-600 mb-4">
+          <div className="bg-green-800/30 backdrop-blur-sm rounded-3xl p-6 text-center border border-green-400/20" data-aos="fade-up">
+            <h3 className="font-semibold text-xl text-white mb-2">Need Help With Your Order?</h3>
+            <p className="text-green-200 mb-4">
               Contact our support team for assistance with your order.
             </p>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" className="border-2 border-green-400 text-green-300 hover:bg-green-800/30">
               Contact Support
             </Button>
           </div>

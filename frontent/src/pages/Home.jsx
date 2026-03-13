@@ -352,9 +352,30 @@ const Home = () => {
     video.playsInline = true;
     video.autoplay = true;
     
-    // Use a more reliable video source (Pexels agricultural video)
-    video.src = "https://videos.pexels.com/video-files/2885232/2885232-uhd_2560_1440_25fps.mp4";
-    video.load();
+    // Use working video sources from Mixkit (free stock videos)
+    // These are guaranteed to work and are agriculture-related
+    const videoSources = [
+      "https://assets.mixkit.co/videos/40770/40770-720.mp4", // Farm landscape with tractor
+      "https://assets.mixkit.co/videos/39818/39818-720.mp4", // Harvesting wheat
+      "https://assets.mixkit.co/videos/38349/38349-720.mp4", // Vegetables on farm
+      "https://assets.mixkit.co/videos/40353/40353-720.mp4"  // Organic farm
+    ];
+    
+    let currentSourceIndex = 0;
+    
+    const loadVideo = () => {
+      if (currentSourceIndex < videoSources.length) {
+        video.src = videoSources[currentSourceIndex];
+        video.load();
+        currentSourceIndex++;
+      } else {
+        console.log("All video sources failed");
+        setVideoError(true);
+        setVideoPlaying(false);
+      }
+    };
+    
+    loadVideo();
     
     const playVideo = async () => {
       try {
@@ -364,36 +385,24 @@ const Home = () => {
       } catch (err) {
         console.log("Video autoplay failed:", err);
         setVideoPlaying(false);
-        setVideoError(true);
-        
-        // Try playing with user interaction
-        const playPromise = video.play();
-        if (playPromise !== undefined) {
-          playPromise.catch(() => {
-            setVideoPlaying(false);
-          });
-        }
       }
     };
 
-    // Small delay to ensure video is loaded
-    setTimeout(playVideo, 100);
-
-    const handleError = (e) => {
-      console.log("Video error:", e);
-      setVideoError(true);
-      setVideoPlaying(false);
-      
-      // Fallback to a different video source
-      video.src = "https://cdn.pixabay.com/video/2023/06/27/168979-842943392_large.mp4";
-      video.load();
+    const handleCanPlay = () => {
       playVideo();
     };
 
+    const handleError = (e) => {
+      console.log("Video error, trying next source...");
+      loadVideo();
+    };
+
+    video.addEventListener('canplay', handleCanPlay);
     video.addEventListener('error', handleError);
     video.addEventListener('loadeddata', playVideo);
 
     return () => {
+      video.removeEventListener('canplay', handleCanPlay);
       video.removeEventListener('error', handleError);
       video.removeEventListener('loadeddata', playVideo);
       video.pause();

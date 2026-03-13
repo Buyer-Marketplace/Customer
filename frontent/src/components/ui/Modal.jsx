@@ -51,7 +51,7 @@ const Modal = ({
           }`}
           onClick={closeOnOverlayClick ? onClose : undefined}
         >
-          <div className="absolute inset-0 bg-gray-900/70 dark:bg-gray-950/80 backdrop-blur-sm"></div>
+          <div className="absolute inset-0 bg-green-950/80 backdrop-blur-sm"></div>
         </div>
 
         {/* Center modal */}
@@ -59,41 +59,42 @@ const Modal = ({
 
         <div
           className={`
-            inline-block align-bottom bg-white dark:bg-dark-card 
+            inline-block align-bottom bg-green-900/30 backdrop-blur-sm
             rounded-2xl text-left overflow-hidden 
             shadow-2xl transform transition-all duration-300 scale-100 opacity-100
+            border border-green-400/20
             sm:my-8 sm:align-middle w-full ${sizes[size]}
             ${isOpen ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}
           `}
         >
           {/* Header */}
           {(title || showCloseButton) && (
-            <div className="flex justify-between items-center px-6 py-4 border-b border-gray-200 dark:border-dark-border">
+            <div className="flex justify-between items-center px-6 py-4 border-b border-green-800">
               {title && (
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                <h3 className="text-xl font-semibold text-white">
                   {title}
                 </h3>
               )}
               {showCloseButton && (
                 <button
                   onClick={onClose}
-                  className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-border transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="p-2 rounded-lg hover:bg-green-800/50 transition-colors focus:outline-none focus:ring-2 focus:ring-green-400"
                   aria-label="Close modal"
                 >
-                  <IoClose size={20} className="text-gray-500 dark:text-gray-400" />
+                  <IoClose size={20} className="text-green-300" />
                 </button>
               )}
             </div>
           )}
 
           {/* Body */}
-          <div className="px-6 py-5">
+          <div className="px-6 py-5 text-green-100">
             {children}
           </div>
 
           {/* Footer */}
           {footer && (
-            <div className="px-6 py-4 bg-gray-50 dark:bg-dark-border/20 border-t border-gray-200 dark:border-dark-border">
+            <div className="px-6 py-4 bg-green-950/50 border-t border-green-800">
               {footer}
             </div>
           )}

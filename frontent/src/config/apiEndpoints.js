@@ -46,6 +46,14 @@ const API_ENDPOINTS = {
     CANCEL: (id) => `/preorders/${id}/cancel`,
     AVAILABLE: '/preorders/available',
   },
+  
+  // User endpoints
+  USERS: {
+    BASE: '/users',
+    DETAIL: (id) => `/users/${id}`,
+    PREORDERS: (id) => `/users/${id}/preorders`,
+    ORDERS: (id) => `/users/${id}/orders`,
+  },
 };
 
 export default API_ENDPOINTS;

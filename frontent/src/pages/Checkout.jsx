@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
@@ -7,7 +7,21 @@ import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import { formatCurrency } from '../utils/formatCurrency';
 import toast from 'react-hot-toast';
-import { IoArrowBack, IoLocationOutline, IoCardOutline, IoPersonOutline } from 'react-icons/io5';
+import { 
+  IoArrowBack, 
+  IoLocationOutline, 
+  IoCardOutline, 
+  IoPersonOutline,
+  IoCheckmarkCircle,
+  IoLeaf
+} from 'react-icons/io5';
+import { FiChevronRight } from 'react-icons/fi';
+import AOS from 'aos';
+import 'aos/dist/aos.css';
+
+// Header image
+const headerImage = "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&q=80&w=1600";
+const headerGradient = "bg-gradient-to-b from-transparent via-green-950/30 to-green-950";
 
 const Checkout = () => {
   const navigate = useNavigate();
@@ -34,6 +48,21 @@ const Checkout = () => {
     cvv: '',
   });
 
+  useEffect(() => {
+    AOS.init({
+      duration: 1000,
+      once: false,
+      mirror: true,
+      offset: 50,
+    });
+  }, []);
+
+  useEffect(() => {
+    if (cartItems.length === 0) {
+      navigate('/cart');
+    }
+  }, [cartItems, navigate]);
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
@@ -44,6 +73,7 @@ const Checkout = () => {
     
     if (step < 3) {
       setStep(step + 1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
 
@@ -53,6 +83,8 @@ const Checkout = () => {
         products: cartItems.map(item => ({
           productId: item.id,
           quantity: item.quantity,
+          price: item.price,
+          name: item.name,
         })),
         deliveryAddress: `${formData.address}, ${formData.city}, ${formData.state} ${formData.zipCode}`,
         paymentMethod: formData.paymentMethod,
@@ -61,12 +93,14 @@ const Checkout = () => {
           email: formData.email,
           phone: formData.phone,
         },
+        total: cartTotal,
+        grandTotal: cartTotal * 1.16, // Including tax
       };
 
       const response = await orderApi.createOrder(orderData);
       clearCart();
       toast.success('Order placed successfully!');
-      navigate(`/orders/${response.id}`);
+      navigate(`/orders/${response.data?.id || response.id}`);
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to place order');
     } finally {
@@ -74,61 +108,83 @@ const Checkout = () => {
     }
   };
 
-  if (cartItems.length === 0) {
-    navigate('/cart');
-    return null;
-  }
-
   const steps = [
     { number: 1, title: 'Shipping Information', icon: IoLocationOutline },
     { number: 2, title: 'Payment Method', icon: IoCardOutline },
     { number: 3, title: 'Review Order', icon: IoPersonOutline },
   ];
 
-  return (
-    <div className="min-h-screen bg-gray-50 py-12">
-      <div className="container-custom max-w-4xl">
-        {/* Header */}
-        <button
-          onClick={() => step > 1 ? setStep(step - 1) : navigate('/cart')}
-          className="inline-flex items-center text-gray-600 hover:text-primary-600 mb-4"
-        >
-          <IoArrowBack className="mr-2" />
-          {step > 1 ? 'Back' : 'Back to Cart'}
-        </button>
+  if (cartItems.length === 0) {
+    return null;
+  }
 
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">Checkout</h1>
+  return (
+    <div className="min-h-screen bg-green-950">
+      {/* Header Image Section */}
+      <div className="relative w-full h-80 overflow-hidden">
+        <img 
+          src={headerImage}
+          alt="Checkout"
+          className="w-full h-full object-cover"
+        />
+        <div className={`absolute inset-0 ${headerGradient}`}></div>
+        
+        {/* Header Content */}
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="text-center text-white" data-aos="fade-down">
+            <h1 className="text-5xl md:text-6xl font-bold mb-4">CHECKOUT</h1>
+            <p className="text-xl text-green-200 max-w-2xl px-4">
+              Complete your order in a few simple steps
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className="container-custom py-8 max-w-4xl">
+        {/* Back Button */}
+        <div className="mb-6" data-aos="fade-right">
+          <button
+            onClick={() => step > 1 ? setStep(step - 1) : navigate('/cart')}
+            className="inline-flex items-center text-green-300 hover:text-green-100 bg-green-950/50 backdrop-blur-sm px-4 py-2 rounded-full border border-green-400/20"
+          >
+            <IoArrowBack className="mr-2" />
+            {step > 1 ? 'Back to Previous Step' : 'Back to Cart'}
+          </button>
+        </div>
 
         {/* Progress Steps */}
-        <div className="mb-8">
+        <div className="bg-green-900/30 backdrop-blur-sm rounded-3xl p-6 border border-green-400/20 mb-8" data-aos="fade-up">
           <div className="flex items-center justify-between">
             {steps.map((s, index) => (
               <React.Fragment key={s.number}>
                 <div className="flex items-center">
                   <div
                     className={`
-                      w-10 h-10 rounded-full flex items-center justify-center border-2
+                      w-12 h-12 rounded-full flex items-center justify-center border-2 transition-all duration-300
                       ${s.number === step
-                        ? 'border-primary-600 bg-primary-600 text-white'
+                        ? 'border-green-400 bg-green-600 text-white'
                         : s.number < step
                         ? 'border-green-500 bg-green-500 text-white'
-                        : 'border-gray-300 bg-white text-gray-500'
+                        : 'border-green-700 bg-green-950/50 text-green-300'
                       }
                     `}
                   >
-                    {s.number < step ? '✓' : s.number}
+                    {s.number < step ? (
+                      <IoCheckmarkCircle className="text-white" size={20} />
+                    ) : (
+                      s.number
+                    )}
                   </div>
-                  <span className="ml-2 text-sm font-medium hidden sm:inline">
+                  <span className={`ml-3 text-sm font-medium hidden sm:inline ${
+                    s.number <= step ? 'text-white' : 'text-green-300/50'
+                  }`}>
                     {s.title}
                   </span>
                 </div>
                 {index < steps.length - 1 && (
-                  <div
-                    className={`
-                      flex-1 h-0.5 mx-4
-                      ${s.number < step ? 'bg-green-500' : 'bg-gray-300'}
-                    `}
-                  />
+                  <FiChevronRight className={`text-2xl ${
+                    s.number < step ? 'text-green-400' : 'text-green-700'
+                  }`} />
                 )}
               </React.Fragment>
             ))}
@@ -137,12 +193,12 @@ const Checkout = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Checkout Form */}
-          <div className="lg:col-span-2">
-            <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-md p-6">
+          <div className="lg:col-span-2" data-aos="fade-right">
+            <form onSubmit={handleSubmit} className="bg-green-900/30 backdrop-blur-sm rounded-3xl p-6 border border-green-400/20">
               {/* Step 1: Shipping Information */}
               {step === 1 && (
                 <div className="space-y-4">
-                  <h2 className="text-xl font-semibold mb-4">Shipping Information</h2>
+                  <h2 className="text-xl font-semibold text-white mb-4">Shipping Information</h2>
                   
                   <Input
                     label="Full Name"
@@ -150,6 +206,8 @@ const Checkout = () => {
                     value={formData.fullName}
                     onChange={handleInputChange}
                     required
+                    className="bg-green-950/50 border-green-700/50 text-white placeholder-green-300/50"
+                    labelClassName="text-green-200"
                   />
                   
                   <Input
@@ -159,6 +217,8 @@ const Checkout = () => {
                     value={formData.email}
                     onChange={handleInputChange}
                     required
+                    className="bg-green-950/50 border-green-700/50 text-white placeholder-green-300/50"
+                    labelClassName="text-green-200"
                   />
                   
                   <Input
@@ -169,6 +229,8 @@ const Checkout = () => {
                     onChange={handleInputChange}
                     required
                     placeholder="e.g., 0712345678"
+                    className="bg-green-950/50 border-green-700/50 text-white placeholder-green-300/50"
+                    labelClassName="text-green-200"
                   />
                   
                   <Input
@@ -177,6 +239,8 @@ const Checkout = () => {
                     value={formData.address}
                     onChange={handleInputChange}
                     required
+                    className="bg-green-950/50 border-green-700/50 text-white placeholder-green-300/50"
+                    labelClassName="text-green-200"
                   />
                   
                   <div className="grid grid-cols-2 gap-4">
@@ -186,6 +250,8 @@ const Checkout = () => {
                       value={formData.city}
                       onChange={handleInputChange}
                       required
+                      className="bg-green-950/50 border-green-700/50 text-white placeholder-green-300/50"
+                      labelClassName="text-green-200"
                     />
                     
                     <Input
@@ -194,6 +260,8 @@ const Checkout = () => {
                       value={formData.state}
                       onChange={handleInputChange}
                       required
+                      className="bg-green-950/50 border-green-700/50 text-white placeholder-green-300/50"
+                      labelClassName="text-green-200"
                     />
                   </div>
                   
@@ -203,6 +271,8 @@ const Checkout = () => {
                     value={formData.zipCode}
                     onChange={handleInputChange}
                     required
+                    className="bg-green-950/50 border-green-700/50 text-white placeholder-green-300/50"
+                    labelClassName="text-green-200"
                   />
                 </div>
               )}
@@ -210,21 +280,25 @@ const Checkout = () => {
               {/* Step 2: Payment Method */}
               {step === 2 && (
                 <div className="space-y-4">
-                  <h2 className="text-xl font-semibold mb-4">Payment Method</h2>
+                  <h2 className="text-xl font-semibold text-white mb-4">Payment Method</h2>
                   
                   <div className="space-y-3">
-                    <label className="flex items-center p-4 border rounded-lg cursor-pointer hover:bg-gray-50">
+                    <label className={`flex items-center p-4 border rounded-xl cursor-pointer transition-all duration-300 ${
+                      formData.paymentMethod === 'mpesa'
+                        ? 'border-green-400 bg-green-800/30'
+                        : 'border-green-700/50 bg-green-950/30 hover:bg-green-800/20'
+                    }`}>
                       <input
                         type="radio"
                         name="paymentMethod"
                         value="mpesa"
                         checked={formData.paymentMethod === 'mpesa'}
                         onChange={handleInputChange}
-                        className="mr-3"
+                        className="mr-3 accent-green-400"
                       />
                       <div>
-                        <span className="font-medium">M-Pesa</span>
-                        <p className="text-sm text-gray-500">Pay via M-Pesa mobile money</p>
+                        <span className="font-medium text-white">M-Pesa</span>
+                        <p className="text-sm text-green-300">Pay via M-Pesa mobile money</p>
                       </div>
                     </label>
 
@@ -237,22 +311,28 @@ const Checkout = () => {
                           onChange={handleInputChange}
                           placeholder="e.g., 0712345678"
                           required={formData.paymentMethod === 'mpesa'}
+                          className="bg-green-950/50 border-green-700/50 text-white placeholder-green-300/50"
+                          labelClassName="text-green-200"
                         />
                       </div>
                     )}
 
-                    <label className="flex items-center p-4 border rounded-lg cursor-pointer hover:bg-gray-50">
+                    <label className={`flex items-center p-4 border rounded-xl cursor-pointer transition-all duration-300 ${
+                      formData.paymentMethod === 'card'
+                        ? 'border-green-400 bg-green-800/30'
+                        : 'border-green-700/50 bg-green-950/30 hover:bg-green-800/20'
+                    }`}>
                       <input
                         type="radio"
                         name="paymentMethod"
                         value="card"
                         checked={formData.paymentMethod === 'card'}
                         onChange={handleInputChange}
-                        className="mr-3"
+                        className="mr-3 accent-green-400"
                       />
                       <div>
-                        <span className="font-medium">Credit/Debit Card</span>
-                        <p className="text-sm text-gray-500">Pay with Visa, Mastercard</p>
+                        <span className="font-medium text-white">Credit/Debit Card</span>
+                        <p className="text-sm text-green-300">Pay with Visa, Mastercard</p>
                       </div>
                     </label>
 
@@ -265,6 +345,8 @@ const Checkout = () => {
                           onChange={handleInputChange}
                           placeholder="1234 5678 9012 3456"
                           required={formData.paymentMethod === 'card'}
+                          className="bg-green-950/50 border-green-700/50 text-white placeholder-green-300/50"
+                          labelClassName="text-green-200"
                         />
                         
                         <Input
@@ -273,6 +355,8 @@ const Checkout = () => {
                           value={formData.cardName}
                           onChange={handleInputChange}
                           required={formData.paymentMethod === 'card'}
+                          className="bg-green-950/50 border-green-700/50 text-white placeholder-green-300/50"
+                          labelClassName="text-green-200"
                         />
                         
                         <div className="grid grid-cols-2 gap-4">
@@ -283,6 +367,8 @@ const Checkout = () => {
                             onChange={handleInputChange}
                             placeholder="MM/YY"
                             required={formData.paymentMethod === 'card'}
+                            className="bg-green-950/50 border-green-700/50 text-white placeholder-green-300/50"
+                            labelClassName="text-green-200"
                           />
                           
                           <Input
@@ -294,6 +380,8 @@ const Checkout = () => {
                             placeholder="123"
                             maxLength="3"
                             required={formData.paymentMethod === 'card'}
+                            className="bg-green-950/50 border-green-700/50 text-white placeholder-green-300/50"
+                            labelClassName="text-green-200"
                           />
                         </div>
                       </div>
@@ -305,40 +393,40 @@ const Checkout = () => {
               {/* Step 3: Review Order */}
               {step === 3 && (
                 <div className="space-y-4">
-                  <h2 className="text-xl font-semibold mb-4">Review Your Order</h2>
+                  <h2 className="text-xl font-semibold text-white mb-4">Review Your Order</h2>
                   
                   {/* Shipping Details */}
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <h3 className="font-medium mb-2">Shipping To:</h3>
-                    <p className="text-gray-700">{formData.fullName}</p>
-                    <p className="text-gray-700">{formData.address}</p>
-                    <p className="text-gray-700">
+                  <div className="bg-green-950/50 rounded-xl p-4 border border-green-700/30">
+                    <h3 className="font-medium text-green-300 mb-2">Shipping To:</h3>
+                    <p className="text-white">{formData.fullName}</p>
+                    <p className="text-green-200">{formData.address}</p>
+                    <p className="text-green-200">
                       {formData.city}, {formData.state} {formData.zipCode}
                     </p>
-                    <p className="text-gray-700">Phone: {formData.phone}</p>
+                    <p className="text-green-200">Phone: {formData.phone}</p>
                   </div>
 
                   {/* Payment Method */}
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <h3 className="font-medium mb-2">Payment Method:</h3>
-                    <p className="text-gray-700">
+                  <div className="bg-green-950/50 rounded-xl p-4 border border-green-700/30">
+                    <h3 className="font-medium text-green-300 mb-2">Payment Method:</h3>
+                    <p className="text-white">
                       {formData.paymentMethod === 'mpesa' ? 'M-Pesa' : 'Credit/Debit Card'}
                     </p>
                     {formData.paymentMethod === 'mpesa' && (
-                      <p className="text-gray-700">Phone: {formData.mpesaPhone}</p>
+                      <p className="text-green-200">Phone: {formData.mpesaPhone}</p>
                     )}
                   </div>
 
                   {/* Order Items */}
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <h3 className="font-medium mb-2">Order Items:</h3>
+                  <div className="bg-green-950/50 rounded-xl p-4 border border-green-700/30">
+                    <h3 className="font-medium text-green-300 mb-2">Order Items:</h3>
                     <div className="space-y-2">
                       {cartItems.map((item) => (
                         <div key={item.id} className="flex justify-between text-sm">
-                          <span>
+                          <span className="text-green-200">
                             {item.name} x {item.quantity}
                           </span>
-                          <span className="font-medium">
+                          <span className="font-medium text-white">
                             {formatCurrency(item.price * item.quantity)}
                           </span>
                         </div>
@@ -355,6 +443,7 @@ const Checkout = () => {
                     type="button"
                     variant="outline"
                     onClick={() => setStep(step - 1)}
+                    className="border-2 border-green-400 text-green-300 hover:bg-green-800/30"
                   >
                     Back
                   </Button>
@@ -363,7 +452,7 @@ const Checkout = () => {
                   type="submit"
                   variant="primary"
                   loading={loading}
-                  className={step === 1 ? 'ml-auto' : ''}
+                  className={`bg-green-600 hover:bg-green-700 text-white ${step === 1 ? 'ml-auto' : ''}`}
                 >
                   {step < 3 ? 'Continue' : 'Place Order'}
                 </Button>
@@ -372,38 +461,40 @@ const Checkout = () => {
           </div>
 
           {/* Order Summary */}
-          <div className="lg:col-span-1">
-            <div className="bg-white rounded-lg shadow-md p-6 sticky top-24">
-              <h2 className="text-lg font-semibold mb-4">Order Summary</h2>
+          <div className="lg:col-span-1" data-aos="fade-left">
+            <div className="bg-green-900/30 backdrop-blur-sm rounded-3xl p-6 border border-green-400/20 sticky top-24">
+              <h2 className="text-lg font-semibold text-white mb-4">Order Summary</h2>
               
-              <div className="space-y-3 mb-4">
+              <div className="space-y-3 mb-4 max-h-60 overflow-y-auto custom-scrollbar">
                 {cartItems.map((item) => (
                   <div key={item.id} className="flex justify-between text-sm">
-                    <span>
+                    <span className="text-green-200">
                       {item.name} x {item.quantity}
                     </span>
-                    <span>{formatCurrency(item.price * item.quantity)}</span>
+                    <span className="text-white font-medium">
+                      {formatCurrency(item.price * item.quantity)}
+                    </span>
                   </div>
                 ))}
               </div>
 
-              <div className="border-t pt-4 space-y-2">
+              <div className="border-t border-green-700 pt-4 space-y-2">
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Subtotal</span>
-                  <span className="font-medium">{formatCurrency(cartTotal)}</span>
+                  <span className="text-green-300">Subtotal</span>
+                  <span className="font-medium text-white">{formatCurrency(cartTotal)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Shipping</span>
-                  <span className="text-green-600">Free</span>
+                  <span className="text-green-300">Shipping</span>
+                  <span className="text-green-400 font-medium">Free</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Tax (16% VAT)</span>
-                  <span>{formatCurrency(cartTotal * 0.16)}</span>
+                  <span className="text-green-300">Tax (16% VAT)</span>
+                  <span className="text-white">{formatCurrency(cartTotal * 0.16)}</span>
                 </div>
-                <div className="border-t pt-2 mt-2">
+                <div className="border-t border-green-700 pt-2 mt-2">
                   <div className="flex justify-between font-bold">
-                    <span>Total</span>
-                    <span className="text-primary-600 text-xl">
+                    <span className="text-white">Total</span>
+                    <span className="text-green-400 text-xl">
                       {formatCurrency(cartTotal * 1.16)}
                     </span>
                   </div>

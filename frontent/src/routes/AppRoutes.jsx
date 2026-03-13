@@ -4,23 +4,23 @@ import { useAuth } from '../context/AuthContext';
 import MainLayout from '../layouts/MainLayout';
 import Loader from '../components/ui/Loader';
 
-// Lazy load pages - UPDATED TO MATCH YOUR ACTUAL FILENAMES
+// Lazy load pages
 const Home = React.lazy(() => import('../pages/Home'));
 const Products = React.lazy(() => import('../pages/Products'));
-const ProductDetails = React.lazy(() => import('../pages/ProductDetails')); // You have ProductDetails.jsx
+const ProductDetails = React.lazy(() => import('../pages/ProductDetails'));
 const Categories = React.lazy(() => import('../pages/Categories'));
-const CategoryProducts = React.lazy(() => import('../pages/CategoryProducts')); // You have CategoryProducts.jsx ✓
-const PreOrders = React.lazy(() => import('../pages/PreOrders')); // You have PreOrders.jsx ✓
-const HarvestCalendar = React.lazy(() => import('../pages/HarvestCalendarPage')); // You have HarvestCalendarPage.jsx ✓
-const Cart = React.lazy(() => import('../pages/Cart')); // You have Cart.jsx ✓
-const Checkout = React.lazy(() => import('../pages/Checkout')); // You have Checkout.jsx ✓
-const Orders = React.lazy(() => import('../pages/Orders')); // You have Orders.jsx ✓
-const OrderDetails = React.lazy(() => import('../pages/OrderDetails')); // You have OrderDetails.jsx ✓
-const FarmerProfile = React.lazy(() => import('../pages/FarmerProfile')); // You have FarmerProfile.jsx ✓
-const Wishlist = React.lazy(() => import('../pages/Wishlist')); // You have Wishlist.jsx ✓
-const SignIn = React.lazy(() => import('../pages/SignIn')); // You have SignIn.jsx ✓
-const SignUp = React.lazy(() => import('../pages/SignUp')); // You have SignUp.jsx ✓
-const NotFound = React.lazy(() => import('../pages/NotFound')); // You have NotFound.jsx ✓
+const CategoryProducts = React.lazy(() => import('../pages/CategoryProducts'));
+const PreOrders = React.lazy(() => import('../pages/PreOrders'));
+const HarvestCalendar = React.lazy(() => import('../pages/HarvestCalendarPage')); // Fixed: added "Page"
+const Cart = React.lazy(() => import('../pages/Cart'));
+const Checkout = React.lazy(() => import('../pages/Checkout'));
+const Orders = React.lazy(() => import('../pages/Orders'));
+const OrderDetails = React.lazy(() => import('../pages/OrderDetails'));
+const FarmerProfile = React.lazy(() => import('../pages/FarmerProfile'));
+const Wishlist = React.lazy(() => import('../pages/Wishlist'));
+const SignIn = React.lazy(() => import('../pages/SignIn'));
+const SignUp = React.lazy(() => import('../pages/SignUp'));
+const NotFound = React.lazy(() => import('../pages/NotFound'));
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -31,7 +31,7 @@ const ProtectedRoute = ({ children }) => {
   }
   
   if (!isAuthenticated) {
-    return <Navigate to="/signin" />;
+    return <Navigate to="/signin" state={{ from: window.location.pathname }} replace />;
   }
   
   return children;
@@ -41,7 +41,7 @@ const AppRoutes = () => {
   return (
     <React.Suspense fallback={<Loader fullScreen />}>
       <Routes>
-        {/* Public Routes */}
+        {/* Public Routes (no layout) */}
         <Route path="/signin" element={<SignIn />} />
         <Route path="/signup" element={<SignUp />} />
         

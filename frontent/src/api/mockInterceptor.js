@@ -4,8 +4,10 @@ import {
   mockFarmers, 
   mockOrders, 
   mockPreOrders,
-  mockHarvestCalendar 
-} from './mockData';
+  mockHarvestCalendar,
+  mockTestimonials,
+  mockUserPreorders 
+} from '../data/mockData';
 
 // Helper functions
 const paginate = (data, page = 1, limit = 10) => {
@@ -32,7 +34,8 @@ const filterProducts = (products, params) => {
     const searchTerm = params.search.toLowerCase();
     filtered = filtered.filter(p => 
       p.name.toLowerCase().includes(searchTerm) || 
-      p.description.toLowerCase().includes(searchTerm)
+      p.description.toLowerCase().includes(searchTerm) ||
+      p.farmer?.farmName?.toLowerCase().includes(searchTerm)
     );
   }
   
@@ -321,7 +324,7 @@ export const setupMockInterceptor = (axiosInstance) => {
 
     if (config.url.match(/^\/preorders\/PRE-\d+$/) && config.method === 'get') {
       const id = config.url.split('/')[2];
-      const preorder = mockPreOrders.find(p => p.id === id);
+      const preorder = mockPreOrders.find(p => p.id === id) || mockUserPreorders.find(p => p.id === id);
       return Promise.reject({
         mockResponse: {
           data: preorder
@@ -338,6 +341,15 @@ export const setupMockInterceptor = (axiosInstance) => {
       return Promise.reject({
         mockResponse: {
           data: preorder
+        }
+      });
+    }
+
+    // ============ TESTIMONIALS ENDPOINTS ============
+    if (config.url === '/testimonials' && config.method === 'get') {
+      return Promise.reject({
+        mockResponse: {
+          data: mockTestimonials
         }
       });
     }

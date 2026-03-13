@@ -13,21 +13,22 @@ function App() {
         <ProductProvider>
           <CartProvider>
             <WishlistProvider>
-              <div className="min-h-screen bg-gray-50 dark:bg-dark-bg transition-colors duration-300">
+              <div className="min-h-screen bg-green-950 transition-colors duration-300">
                 <AppRoutes />
                 <Toaster 
                   position="top-right"
                   toastOptions={{
                     duration: 4000,
                     style: {
-                      background: '#363636',
+                      background: '#052e16', // green-950
                       color: '#fff',
+                      border: '1px solid #4ade80', // green-400
                     },
                     success: {
                       duration: 3000,
                       iconTheme: {
-                        primary: '#22c55e',
-                        secondary: '#fff',
+                        primary: '#4ade80', // green-400
+                        secondary: '#052e16', // green-950
                       },
                     },
                     error: {

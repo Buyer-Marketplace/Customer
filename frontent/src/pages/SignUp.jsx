@@ -1,14 +1,26 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
-import { IoMailOutline, IoLockClosedOutline, IoPersonOutline, IoLeaf } from 'react-icons/io5';
+import { IoMailOutline, IoLockClosedOutline, IoPersonOutline, IoLeaf, IoArrowBack } from 'react-icons/io5';
+import AOS from 'aos';
+import 'aos/dist/aos.css';
+
+// Working header images (multiple fallbacks)
+const headerImages = [
+  "https://images.unsplash.com/photo-1464226184884-fa280b87c399?auto=format&fit=crop&q=80&w=1600", // Fresh harvest
+  "https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&q=80&w=1600", // Farm landscape
+  "https://images.unsplash.com/photo-1523348837708-15d4a09cfac2?auto=format&fit=crop&q=80&w=1600"  // Vegetables
+];
+const headerGradient = "bg-gradient-to-b from-transparent via-green-950/40 to-green-950";
 
 const SignUp = () => {
   const navigate = useNavigate();
   const { register } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [imageIndex, setImageIndex] = useState(0);
+  const [imageError, setImageError] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -18,13 +30,27 @@ const SignUp = () => {
   });
   const [errors, setErrors] = useState({});
 
+  useEffect(() => {
+    AOS.init({
+      duration: 600,
+      once: true,
+    });
+  }, []);
+
+  const handleImageError = () => {
+    if (imageIndex < headerImages.length - 1) {
+      setImageIndex(prev => prev + 1);
+    } else {
+      setImageError(true);
+    }
+  };
+
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData(prev => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value,
     }));
-    // Clear error for this field
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
@@ -32,24 +58,22 @@ const SignUp = () => {
 
   const validateForm = () => {
     const newErrors = {};
-    if (!formData.name) {
-      newErrors.name = 'Full name is required';
-    }
+    if (!formData.name) newErrors.name = 'Name required';
     if (!formData.email) {
-      newErrors.email = 'Email is required';
+      newErrors.email = 'Email required';
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Email is invalid';
+      newErrors.email = 'Invalid email';
     }
     if (!formData.password) {
-      newErrors.password = 'Password is required';
+      newErrors.password = 'Password required';
     } else if (formData.password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
+      newErrors.password = 'Min 6 characters';
     }
     if (formData.password !== formData.confirmPassword) {
       newErrors.confirmPassword = 'Passwords do not match';
     }
     if (!formData.agreeTerms) {
-      newErrors.agreeTerms = 'You must agree to the terms and conditions';
+      newErrors.agreeTerms = 'You must agree';
     }
     return newErrors;
   };
@@ -77,114 +101,151 @@ const SignUp = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-earth-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full">
-        {/* Logo */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-primary-600 rounded-full mb-4">
-            <IoLeaf className="text-white" size={40} />
-          </div>
-          <h2 className="text-3xl font-bold text-gray-900">Create Account</h2>
-          <p className="text-gray-600 mt-2">Join AgriMarket as a buyer</p>
-        </div>
+    <div className="min-h-screen bg-green-950 relative">
+      {/* Header Image with Overlay - reduced height */}
+      <div className="absolute top-0 left-0 right-0 h-[30vh] overflow-hidden">
+        {!imageError ? (
+          <img 
+            src={headerImages[imageIndex]}
+            alt="Farm market"
+            className="w-full h-full object-cover"
+            onError={handleImageError}
+          />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-r from-green-800 to-green-900"></div>
+        )}
+        <div className={`absolute inset-0 ${headerGradient}`}></div>
+      </div>
 
-        {/* Sign Up Form */}
-        <div className="bg-white rounded-2xl shadow-xl p-8">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <Input
-              label="Full Name"
-              type="text"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              error={errors.name}
-              icon={IoPersonOutline}
-              placeholder="John Doe"
-            />
+      {/* Back Button */}
+      <div className="absolute top-4 left-4 z-20">
+        <button
+          onClick={() => navigate('/')}
+          className="inline-flex items-center text-green-300 hover:text-green-100 bg-green-950/60 backdrop-blur-sm px-3 py-1.5 rounded-full border border-green-400/20 transition-colors text-sm"
+        >
+          <IoArrowBack className="mr-1.5" size={14} />
+          Back
+        </button>
+      </div>
 
-            <Input
-              label="Email Address"
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              error={errors.email}
-              icon={IoMailOutline}
-              placeholder="you@example.com"
-            />
-
-            <Input
-              label="Password"
-              type="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              error={errors.password}
-              icon={IoLockClosedOutline}
-              placeholder="••••••••"
-            />
-
-            <Input
-              label="Confirm Password"
-              type="password"
-              name="confirmPassword"
-              value={formData.confirmPassword}
-              onChange={handleChange}
-              error={errors.confirmPassword}
-              icon={IoLockClosedOutline}
-              placeholder="••••••••"
-            />
-
-            <div>
-              <label className="flex items-start">
-                <input
-                  type="checkbox"
-                  name="agreeTerms"
-                  checked={formData.agreeTerms}
-                  onChange={handleChange}
-                  className="mt-1 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-                />
-                <span className="ml-2 text-sm text-gray-600">
-                  I agree to the{' '}
-                  <Link to="/terms" className="text-primary-600 hover:text-primary-700">
-                    Terms of Service
-                  </Link>{' '}
-                  and{' '}
-                  <Link to="/privacy" className="text-primary-600 hover:text-primary-700">
-                    Privacy Policy
-                  </Link>
-                </span>
-              </label>
-              {errors.agreeTerms && (
-                <p className="mt-1 text-sm text-red-600">{errors.agreeTerms}</p>
-              )}
+      {/* Content - Centered with reduced top padding */}
+      <div className="relative z-10 flex items-center justify-center min-h-screen pt-[8vh]">
+        <div className="w-full max-w-sm px-4" data-aos="fade-up">
+          {/* Sign Up Card - further reduced padding and spacing */}
+          <div className="bg-green-900/40 backdrop-blur-md rounded-2xl p-4 border border-green-400/20 shadow-xl">
+            {/* Logo - smaller */}
+            <div className="text-center mb-2">
+              <div className="inline-flex items-center justify-center w-10 h-10 bg-green-600 rounded-full mb-1 border-2 border-green-400">
+                <IoLeaf className="text-white" size={18} />
+              </div>
+              <h2 className="text-base font-bold text-white">Create Account</h2>
+              <p className="text-green-200 text-[9px] mt-0.5">Join as a buyer</p>
             </div>
 
-            <Button
-              type="submit"
-              variant="primary"
-              size="lg"
-              fullWidth
-              loading={loading}
-            >
-              Create Account
-            </Button>
-          </form>
+            {/* Sign Up Form - minimal spacing */}
+            <form onSubmit={handleSubmit} className="space-y-2">
+              <Input
+                label="Full Name"
+                type="text"
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
+                error={errors.name}
+                icon={IoPersonOutline}
+                placeholder="John Doe"
+                className="bg-green-950/60 border-green-700/50 text-white placeholder-green-300/50 text-xs py-1.5"
+                labelClassName="text-green-200 text-[9px] mb-0.5"
+              />
 
-          {/* Divider */}
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300"></div>
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white text-gray-500">Or sign up with</span>
-            </div>
-          </div>
+              <Input
+                label="Email"
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                error={errors.email}
+                icon={IoMailOutline}
+                placeholder="you@example.com"
+                className="bg-green-950/60 border-green-700/50 text-white placeholder-green-300/50 text-xs py-1.5"
+                labelClassName="text-green-200 text-[9px] mb-0.5"
+              />
 
-          {/* Social Sign Up */}
-          <div className="grid grid-cols-2 gap-3">
-            <button className="flex items-center justify-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-              <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
+              <Input
+                label="Password"
+                type="password"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                error={errors.password}
+                icon={IoLockClosedOutline}
+                placeholder="••••••••"
+                className="bg-green-950/60 border-green-700/50 text-white placeholder-green-300/50 text-xs py-1.5"
+                labelClassName="text-green-200 text-[9px] mb-0.5"
+              />
+
+              <Input
+                label="Confirm Password"
+                type="password"
+                name="confirmPassword"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                error={errors.confirmPassword}
+                icon={IoLockClosedOutline}
+                placeholder="••••••••"
+                className="bg-green-950/60 border-green-700/50 text-white placeholder-green-300/50 text-xs py-1.5"
+                labelClassName="text-green-200 text-[9px] mb-0.5"
+              />
+
+              <div>
+                <label className="flex items-start cursor-pointer">
+                  <input
+                    type="checkbox"
+                    name="agreeTerms"
+                    checked={formData.agreeTerms}
+                    onChange={handleChange}
+                    className="mt-0.5 rounded border-green-700 bg-green-950/60 text-green-400 focus:ring-green-400 w-2.5 h-2.5"
+                  />
+                  <span className="ml-1 text-[8px] text-green-200 leading-tight">
+                    I agree to the{' '}
+                    <Link to="/terms" className="text-green-400 hover:text-green-300">
+                      Terms
+                    </Link>{' '}
+                    &{' '}
+                    <Link to="/privacy" className="text-green-400 hover:text-green-300">
+                      Privacy
+                    </Link>
+                  </span>
+                </label>
+                {errors.agreeTerms && (
+                  <p className="mt-0.5 text-[8px] text-red-400">{errors.agreeTerms}</p>
+                )}
+              </div>
+
+              <Button
+                type="submit"
+                variant="primary"
+                size="sm"
+                fullWidth
+                loading={loading}
+                className="bg-green-600 hover:bg-green-700 text-white text-xs py-1.5 mt-1"
+              >
+                Create Account
+              </Button>
+            </form>
+
+            {/* Divider - minimal */}
+            <div className="relative my-2">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-green-800"></div>
+              </div>
+              <div className="relative flex justify-center text-[8px]">
+                <span className="px-2 bg-green-900/30 text-green-300">Or</span>
+              </div>
+            </div>
+
+            {/* Google Sign Up - compact */}
+            <button className="w-full flex items-center justify-center px-2 py-1.5 border border-green-700 rounded-lg hover:bg-green-800/30 transition-colors mb-1.5">
+              <svg className="w-3 h-3 mr-1" viewBox="0 0 24 24">
                 <path
                   fill="#4285F4"
                   d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -202,42 +263,16 @@ const SignUp = () => {
                   d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
                 />
               </svg>
-              Google
+              <span className="text-white text-xs">Google</span>
             </button>
-            <button className="flex items-center justify-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-              <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z" />
-              </svg>
-              Facebook
-            </button>
-          </div>
 
-          {/* Sign In Link */}
-          <p className="mt-6 text-center text-sm text-gray-600">
-            Already have an account?{' '}
-            <Link to="/signin" className="font-medium text-primary-600 hover:text-primary-700">
-              Sign in
-            </Link>
-          </p>
-        </div>
-
-        {/* Buyer Benefits */}
-        <div className="mt-8 grid grid-cols-2 gap-4 text-center text-sm">
-          <div>
-            <p className="font-semibold text-primary-600">✓ Fresh Produce</p>
-            <p className="text-gray-500">Direct from farms</p>
-          </div>
-          <div>
-            <p className="font-semibold text-primary-600">✓ Best Prices</p>
-            <p className="text-gray-500">No middlemen</p>
-          </div>
-          <div>
-            <p className="font-semibold text-primary-600">✓ Free Delivery</p>
-            <p className="text-gray-500">On orders over KES 2,000</p>
-          </div>
-          <div>
-            <p className="font-semibold text-primary-600">✓ Quality Guaranteed</p>
-            <p className="text-gray-500">100% satisfaction</p>
+            {/* Sign In Link */}
+            <p className="text-center text-[9px] text-green-200">
+              Already have an account?{' '}
+              <Link to="/signin" className="font-medium text-green-400 hover:text-green-300">
+                Sign in
+              </Link>
+            </p>
           </div>
         </div>
       </div>

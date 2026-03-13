@@ -54,24 +54,24 @@ const Pagination = ({
 
   const sizes = {
     sm: {
-      button: 'p-1.5 min-w-[32px] h-8 text-sm',
-      icon: 16,
+      button: 'p-1.5 min-w-[32px] h-8 text-xs',
+      icon: 14,
     },
     md: {
-      button: 'p-2 min-w-[40px] h-10 text-base',
-      icon: 18,
+      button: 'p-2 min-w-[40px] h-10 text-sm',
+      icon: 16,
     },
     lg: {
-      button: 'p-2.5 min-w-[48px] h-12 text-lg',
-      icon: 20,
+      button: 'p-2.5 min-w-[48px] h-12 text-base',
+      icon: 18,
     },
   };
 
   const buttonBaseClasses = `
     inline-flex items-center justify-center
-    font-medium rounded-xl
+    font-medium rounded-lg
     transition-all duration-200
-    focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2
+    focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:ring-offset-green-950
     disabled:opacity-50 disabled:cursor-not-allowed
   `;
 
@@ -81,7 +81,12 @@ const Pagination = ({
       <button
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage === 1}
-        className={`${buttonBaseClasses} ${sizes[size].button} border-2 border-gray-300 dark:border-dark-border hover:bg-gray-50 dark:hover:bg-dark-border disabled:hover:bg-transparent`}
+        className={`
+          ${buttonBaseClasses} ${sizes[size].button} 
+          border border-green-700/50 bg-green-900/30 text-green-300
+          hover:bg-green-800/50 hover:border-green-600
+          disabled:hover:bg-green-900/30 disabled:hover:border-green-700/50
+        `}
         aria-label="Previous page"
       >
         <IoChevronBack size={sizes[size].icon} />
@@ -94,7 +99,7 @@ const Pagination = ({
             return (
               <span
                 key={`dots-${index}`}
-                className={`${sizes[size].button} inline-flex items-center justify-center text-gray-500 dark:text-gray-400`}
+                className={`${sizes[size].button} inline-flex items-center justify-center text-green-400`}
               >
                 <IoEllipsisHorizontal size={sizes[size].icon} />
               </span>
@@ -109,8 +114,8 @@ const Pagination = ({
                 ${buttonBaseClasses} ${sizes[size].button}
                 ${
                   currentPage === page
-                    ? 'bg-primary-600 text-white border-2 border-primary-600 hover:bg-primary-700 shadow-md'
-                    : 'border-2 border-gray-300 dark:border-dark-border hover:bg-gray-50 dark:hover:bg-dark-border text-gray-700 dark:text-gray-300'
+                    ? 'bg-green-600 text-white border border-green-500 hover:bg-green-700 shadow-md'
+                    : 'border border-green-700/50 bg-green-900/30 text-green-300 hover:bg-green-800/50 hover:border-green-600'
                 }
               `}
               aria-current={currentPage === page ? 'page' : undefined}
@@ -126,7 +131,12 @@ const Pagination = ({
       <button
         onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage === totalPages}
-        className={`${buttonBaseClasses} ${sizes[size].button} border-2 border-gray-300 dark:border-dark-border hover:bg-gray-50 dark:hover:bg-dark-border disabled:hover:bg-transparent`}
+        className={`
+          ${buttonBaseClasses} ${sizes[size].button}
+          border border-green-700/50 bg-green-900/30 text-green-300
+          hover:bg-green-800/50 hover:border-green-600
+          disabled:hover:bg-green-900/30 disabled:hover:border-green-700/50
+        `}
         aria-label="Next page"
       >
         <IoChevronForward size={sizes[size].icon} />

@@ -20,8 +20,10 @@ import {
   GiAppleSeeds,
   GiSunflower,
   GiPlantWatering,
-  GiFarmer, // Using GiFarmer instead of GiAgriculture
-  GiHarvest // This actually exists! Let's keep it
+  GiFarmer,
+  GiHoneycomb,
+  GiHerbsBundle,
+  GiCoffeeBeans
 } from 'react-icons/gi';
 import AOS from 'aos';
 import 'aos/dist/aos.css';
@@ -41,7 +43,8 @@ const mockCategoriesWithIcons = [
     image: 'https://images.unsplash.com/photo-1566385101042-1a0aa0c12e8c?auto=format&fit=crop&q=80&w=600',
     description: 'Fresh, organic vegetables directly from local farms',
     productCount: 25,
-    color: 'green'
+    color: 'green',
+    slug: 'vegetables'
   },
   { 
     id: 2, 
@@ -50,7 +53,8 @@ const mockCategoriesWithIcons = [
     image: 'https://images.unsplash.com/photo-1619566639371-57ce5024522c?auto=format&fit=crop&q=80&w=600',
     description: 'Seasonal fruits picked at peak ripeness',
     productCount: 18,
-    color: 'yellow'
+    color: 'yellow',
+    slug: 'fruits'
   },
   { 
     id: 3, 
@@ -59,7 +63,8 @@ const mockCategoriesWithIcons = [
     image: 'https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?auto=format&fit=crop&q=80&w=600',
     description: 'High-quality grains and cereals',
     productCount: 15,
-    color: 'amber'
+    color: 'amber',
+    slug: 'grains'
   },
   { 
     id: 4, 
@@ -68,7 +73,8 @@ const mockCategoriesWithIcons = [
     image: 'https://images.unsplash.com/photo-1528498033373-3c6c08e93d79?auto=format&fit=crop&q=80&w=600',
     description: 'Fresh dairy products from grass-fed cows',
     productCount: 12,
-    color: 'blue'
+    color: 'blue',
+    slug: 'dairy'
   },
   { 
     id: 5, 
@@ -77,7 +83,8 @@ const mockCategoriesWithIcons = [
     image: 'https://images.unsplash.com/photo-1516467508483-a7212febe31a?auto=format&fit=crop&q=80&w=600',
     description: 'Healthy livestock and poultry',
     productCount: 8,
-    color: 'orange'
+    color: 'orange',
+    slug: 'livestock'
   },
   { 
     id: 6, 
@@ -86,7 +93,8 @@ const mockCategoriesWithIcons = [
     image: 'https://images.unsplash.com/photo-1512149177596-f817c7ef5d4c?auto=format&fit=crop&q=80&w=600',
     description: 'High-quality seeds for planting',
     productCount: 10,
-    color: 'green'
+    color: 'green',
+    slug: 'seeds'
   },
   { 
     id: 7, 
@@ -95,7 +103,8 @@ const mockCategoriesWithIcons = [
     image: 'https://images.unsplash.com/photo-1495107334309-fcf20504a5ab?auto=format&fit=crop&q=80&w=600',
     description: 'Certified organic produce',
     productCount: 20,
-    color: 'green'
+    color: 'green',
+    slug: 'organic'
   },
   { 
     id: 8, 
@@ -104,16 +113,18 @@ const mockCategoriesWithIcons = [
     image: 'https://images.unsplash.com/photo-1416870213587-7980fe336d74?auto=format&fit=crop&q=80&w=600',
     description: 'Farm tools and equipment',
     productCount: 15,
-    color: 'gray'
+    color: 'gray',
+    slug: 'tools'
   },
   { 
     id: 9, 
     name: 'Herbs & Spices', 
-    icon: GiHarvest, // GiHarvest does exist
+    icon: GiHerbsBundle,
     image: 'https://images.unsplash.com/photo-1532336414038-cf19250c5757?auto=format&fit=crop&q=80&w=600',
     description: 'Fresh herbs and aromatic spices',
     productCount: 12,
-    color: 'green'
+    color: 'green',
+    slug: 'herbs'
   },
   { 
     id: 10, 
@@ -122,25 +133,28 @@ const mockCategoriesWithIcons = [
     image: 'https://images.unsplash.com/photo-1542992015-5a3a5c4b6f1d?auto=format&fit=crop&q=80&w=600',
     description: 'Premium nuts and seeds',
     productCount: 10,
-    color: 'amber'
+    color: 'amber',
+    slug: 'nuts'
   },
   { 
     id: 11, 
     name: 'Beverages', 
-    icon: GiFruitTree,
+    icon: GiCoffeeBeans,
     image: 'https://images.unsplash.com/photo-1542992015-5a3a5c4b6f1d?auto=format&fit=crop&q=80&w=600',
     description: 'Fresh juices and traditional beverages',
     productCount: 8,
-    color: 'yellow'
+    color: 'yellow',
+    slug: 'beverages'
   },
   { 
     id: 12, 
     name: 'Honey & Bee Products', 
-    icon: GiFarmer, // Using GiFarmer instead of GiAgriculture
+    icon: GiHoneycomb,
     image: 'https://images.unsplash.com/photo-1587049352847-81a56d002c9d?auto=format&fit=crop&q=80&w=600',
     description: 'Pure honey and bee products',
     productCount: 6,
-    color: 'amber'
+    color: 'amber',
+    slug: 'honey'
   },
 ];
 
@@ -158,7 +172,8 @@ const Categories = () => {
     ? categories.map((cat, index) => ({
         ...cat,
         icon: mockCategoriesWithIcons[index % mockCategoriesWithIcons.length]?.icon || GiCarrot,
-        color: mockCategoriesWithIcons[index % mockCategoriesWithIcons.length]?.color || 'green'
+        color: mockCategoriesWithIcons[index % mockCategoriesWithIcons.length]?.color || 'green',
+        slug: cat.slug || cat.name.toLowerCase().replace(/ & /g, '-').replace(/ /g, '-')
       }))
     : mockCategoriesWithIcons;
 
@@ -195,6 +210,10 @@ const Categories = () => {
 
   const loadMore = () => {
     setDisplayCount(prev => prev + 4);
+  };
+
+  const handleCategoryClick = (categoryId) => {
+    navigate(`/categories/${categoryId}`);
   };
 
   return (
@@ -280,7 +299,7 @@ const Categories = () => {
                 <div 
                   key={category.id}
                   className="cursor-pointer transform transition-all duration-500 hover:scale-105"
-                  onClick={() => navigate(`/categories/${category.id}`)}
+                  onClick={() => handleCategoryClick(category.id)}
                   data-aos="fade-up"
                   data-aos-delay={index * 100}
                 >
@@ -289,73 +308,34 @@ const Categories = () => {
               ))}
             </div>
 
-            {/* Remaining categories in grid or horizontal scroll */}
+            {/* Remaining categories */}
             {filteredCategories.length > 4 && (
-              <>
-                {/* On desktop, show as grid */}
-                <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                  {filteredCategories.slice(4, displayCount).map((category, index) => (
-                    <div 
-                      key={category.id}
-                      className="cursor-pointer transform transition-all duration-500 hover:scale-105"
-                      onClick={() => navigate(`/categories/${category.id}`)}
-                      data-aos="fade-up"
-                      data-aos-delay={index * 100}
-                    >
-                      <CategoryCard category={category} />
-                    </div>
-                  ))}
-                </div>
-
-                {/* On mobile, show horizontal scroll */}
-                <div className="md:hidden relative mt-8">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-white">More Categories</h3>
-                    <div className="flex gap-2">
-                      <button 
-                        onClick={() => scrollHorizontally('left')}
-                        className="p-2 bg-green-800/80 backdrop-blur-md rounded-full hover:bg-green-700 transition-colors"
-                      >
-                        <FiChevronLeft className="w-4 h-4 text-white" />
-                      </button>
-                      <button 
-                        onClick={() => scrollHorizontally('right')}
-                        className="p-2 bg-green-800/80 backdrop-blur-md rounded-full hover:bg-green-700 transition-colors"
-                      >
-                        <FiChevronRight className="w-4 h-4 text-white" />
-                      </button>
-                    </div>
-                  </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {filteredCategories.slice(4).map((category, index) => (
                   <div 
-                    ref={scrollRef}
-                    className="flex gap-4 overflow-x-auto scrollbar-hide pb-4"
-                    style={{ scrollBehavior: 'smooth' }}
+                    key={category.id}
+                    className="cursor-pointer transform transition-all duration-500 hover:scale-105"
+                    onClick={() => handleCategoryClick(category.id)}
+                    data-aos="fade-up"
+                    data-aos-delay={index * 100}
                   >
-                    {filteredCategories.slice(4).map((category) => (
-                      <div 
-                        key={category.id}
-                        className="flex-shrink-0 w-48 cursor-pointer transform transition-all duration-500 hover:scale-105"
-                        onClick={() => navigate(`/categories/${category.id}`)}
-                      >
-                        <CategoryCard category={category} />
-                      </div>
-                    ))}
+                    <CategoryCard category={category} />
                   </div>
-                </div>
+                ))}
+              </div>
+            )}
 
-                {/* Load More Button (desktop) */}
-                {displayCount < filteredCategories.length && (
-                  <div className="hidden md:block text-center mt-8">
-                    <Button
-                      variant="outline"
-                      onClick={loadMore}
-                      className="border-2 border-green-400 text-green-300 hover:bg-green-800/30 px-8 py-3"
-                    >
-                      Load More Categories
-                    </Button>
-                  </div>
-                )}
-              </>
+            {/* Load More Button */}
+            {displayCount < filteredCategories.length && (
+              <div className="text-center mt-8">
+                <Button
+                  variant="outline"
+                  onClick={loadMore}
+                  className="border-2 border-green-400 text-green-300 hover:bg-green-800/30 px-8 py-3"
+                >
+                  Load More Categories
+                </Button>
+              </div>
             )}
           </>
         )}
