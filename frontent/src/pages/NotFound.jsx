@@ -30,9 +30,9 @@ const NotFound = () => {
               Go to Homepage
             </Button>
           </Link>
-          <Link to="/products">
+          <Link to="/marketplace">
             <Button variant="outline" className="border-2 border-green-400 text-green-300 hover:bg-green-800/30">
-              Browse Products
+              Browse Marketplace
             </Button>
           </Link>
         </div>
@@ -45,16 +45,16 @@ const NotFound = () => {
               Categories
             </Link>
             <span className="text-green-700">•</span>
+            <Link to="/crops" className="text-green-400 hover:text-green-300 transition-colors">
+              Crops
+            </Link>
+            <span className="text-green-700">•</span>
             <Link to="/preorders" className="text-green-400 hover:text-green-300 transition-colors">
               Pre-Orders
             </Link>
             <span className="text-green-700">•</span>
-            <Link to="/harvest-calendar" className="text-green-400 hover:text-green-300 transition-colors">
-              Harvest Calendar
-            </Link>
-            <span className="text-green-700">•</span>
-            <Link to="/farmers" className="text-green-400 hover:text-green-300 transition-colors">
-              Our Farmers
+            <Link to="/marketplace" className="text-green-400 hover:text-green-300 transition-colors">
+              Marketplace
             </Link>
           </div>
         </div>

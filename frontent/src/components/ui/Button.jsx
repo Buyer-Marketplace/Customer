@@ -14,54 +14,71 @@ const Button = ({
   iconPosition = 'left',
   ...props
 }) => {
-  const baseClasses = 'inline-flex items-center justify-center font-semibold rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 shadow-sm hover:shadow-md active:scale-95';
+  // Base classes - gradient backgrounds with smooth corners
+  const baseClasses = 'inline-flex items-center justify-center font-semibold rounded-lg transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-green-950 shadow-md hover:shadow-lg active:scale-95 border border-yellow-400/20 hover:border-yellow-400/40';
   
+  // Gradient variants with yellow accent - all centered
   const variants = {
-    primary: 'bg-primary-600 text-white hover:bg-primary-700 focus:ring-primary-500 disabled:bg-primary-300 dark:bg-primary-600 dark:hover:bg-primary-700',
-    secondary: 'bg-earth-600 text-white hover:bg-earth-700 focus:ring-earth-500 disabled:bg-earth-300 dark:bg-earth-600 dark:hover:bg-earth-700',
-    outline: 'border-2 border-primary-600 text-primary-600 hover:bg-primary-50 hover:border-primary-700 hover:text-primary-700 focus:ring-primary-500 disabled:border-primary-300 disabled:text-primary-300 dark:border-primary-500 dark:text-primary-400 dark:hover:bg-primary-900/20',
-    danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500 disabled:bg-red-300 dark:bg-red-600 dark:hover:bg-red-700',
-    success: 'bg-green-600 text-white hover:bg-green-700 focus:ring-green-500 disabled:bg-green-300 dark:bg-green-600 dark:hover:bg-green-700',
-    ghost: 'bg-transparent text-gray-700 hover:bg-gray-100 focus:ring-gray-500 disabled:text-gray-300 dark:text-gray-300 dark:hover:bg-gray-800',
+    primary: 'bg-gradient-to-r from-green-700 to-green-800 hover:from-green-600 hover:to-green-700 text-yellow-300 focus:ring-yellow-400 disabled:from-green-800/50 disabled:to-green-900/50 disabled:text-yellow-300/50 shadow-green-800/30',
+    
+    secondary: 'bg-gradient-to-r from-green-800 to-green-900 hover:from-green-700 hover:to-green-800 text-yellow-300 focus:ring-yellow-400 disabled:from-green-900/50 disabled:to-green-950/50 disabled:text-yellow-300/50',
+    
+    outline: 'bg-transparent border-2 border-green-600 text-yellow-300 hover:bg-gradient-to-r hover:from-green-800/80 hover:to-green-900/80 hover:text-yellow-200 focus:ring-yellow-400 disabled:border-green-600/50 disabled:text-yellow-300/50',
+    
+    danger: 'bg-gradient-to-r from-red-700 to-red-800 hover:from-red-600 hover:to-red-700 text-yellow-300 focus:ring-yellow-400 disabled:from-red-800/50 disabled:to-red-900/50 disabled:text-yellow-300/50',
+    
+    success: 'bg-gradient-to-r from-green-600 to-green-700 hover:from-green-500 hover:to-green-600 text-yellow-300 focus:ring-yellow-400 disabled:from-green-700/50 disabled:to-green-800/50 disabled:text-yellow-300/50',
+    
+    ghost: 'bg-transparent border border-yellow-400/20 text-yellow-300/80 hover:bg-gradient-to-r hover:from-green-800/50 hover:to-green-900/50 hover:text-yellow-200 hover:border-yellow-400/40 focus:ring-yellow-400 disabled:text-yellow-300/30',
   };
   
+  // Responsive sizes - optimized for all screens
   const sizes = {
-    sm: 'px-3 py-1.5 text-sm gap-1.5',
-    md: 'px-5 py-2.5 text-base gap-2',
-    lg: 'px-7 py-3.5 text-lg gap-2.5',
+    sm: 'px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm gap-1 sm:gap-1.5',
+    md: 'px-4 sm:px-5 py-2 sm:py-2.5 text-sm sm:text-base gap-1.5 sm:gap-2',
+    lg: 'px-5 sm:px-6 py-2.5 sm:py-3 text-base sm:text-lg gap-2 sm:gap-2.5',
+    xl: 'px-6 sm:px-8 py-3 sm:py-4 text-lg sm:text-xl gap-2.5 sm:gap-3',
   };
   
   const classes = [
     baseClasses,
     variants[variant],
     sizes[size],
-    fullWidth ? 'w-full' : '',
+    fullWidth ? 'w-full' : 'w-auto',
     disabled || loading ? 'cursor-not-allowed opacity-60' : '',
     className,
   ].filter(Boolean).join(' ');
 
+  // Responsive icon sizes
   const iconSize = {
-    sm: 16,
-    md: 18,
-    lg: 20,
+    sm: 14,
+    md: 16,
+    lg: 18,
+    xl: 20,
   };
 
   const iconElement = Icon && (
-    <Icon size={iconSize[size]} className={iconPosition === 'left' ? 'order-first' : 'order-last'} />
+    <Icon 
+      size={iconSize[size]} 
+      className={`${iconPosition === 'left' ? 'order-first mr-1 sm:mr-2' : 'order-last ml-1 sm:ml-2'} transition-transform group-hover:translate-x-1 text-yellow-300`} 
+    />
   );
 
   return (
     <button
       type={type}
-      className={classes}
+      className={`${classes} group relative overflow-hidden`}
       disabled={disabled || loading}
       onClick={onClick}
       {...props}
     >
+      {/* Shine effect overlay for all buttons */}
+      <span className="absolute inset-0 bg-gradient-to-r from-transparent via-yellow-400/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></span>
+      
       {loading ? (
-        <>
+        <div className="flex items-center justify-center gap-2 relative z-10">
           <svg 
-            className="animate-spin h-4 w-4 text-current" 
+            className="animate-spin h-4 w-4 text-yellow-300" 
             xmlns="http://www.w3.org/2000/svg" 
             fill="none" 
             viewBox="0 0 24 24"
@@ -69,14 +86,14 @@ const Button = ({
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
           </svg>
-          <span>Loading...</span>
-        </>
+          <span className="text-yellow-300 text-center">Loading...</span>
+        </div>
       ) : (
-        <>
+        <div className="flex items-center justify-center relative z-10">
           {iconPosition === 'left' && iconElement}
-          <span>{children}</span>
+          <span className="text-yellow-300 text-center whitespace-nowrap">{children}</span>
           {iconPosition === 'right' && iconElement}
-        </>
+        </div>
       )}
     </button>
   );

@@ -4,25 +4,34 @@ import { formatCurrency } from '../../utils/formatCurrency';
 import { formatDate } from '../../utils/formatDate';
 import Badge from '../ui/Badge';
 import Button from '../ui/Button';
-import { IoReceipt, IoLocationOutline } from 'react-icons/io5';
+import { IoReceiptOutline, IoLocationOutline, IoTimeOutline } from 'react-icons/io5';
 
 const OrderCard = ({ order }) => {
   const getStatusColor = (status) => {
-    switch (status.toLowerCase()) {
+    switch (status?.toLowerCase()) {
       case 'pending':
         return 'warning';
-      case 'confirmed':
-      case 'processing':
-        return 'info';
-      case 'shipped':
-        return 'primary';
-      case 'delivered':
+      case 'paid':
         return 'success';
-      case 'cancelled':
-        return 'danger';
+      case 'delivered':
+        return 'primary';
       default:
         return 'default';
     }
+  };
+
+  // Ensure order has required properties with fallbacks
+  const safeOrder = {
+    id: order?.id || 'N/A',
+    marketplace_item_id: order?.marketplace_item_id,
+    crop_name: order?.crop_name || 'Crop',
+    quantity_ordered_kg: order?.quantity_ordered_kg || 0,
+    total_price: order?.total_price || 0,
+    transaction_date: order?.transaction_date || new Date().toISOString(),
+    escrow_status: order?.escrow_status || 'pending',
+    mpesa_receipt_no: order?.mpesa_receipt_no,
+    motorspeed_tracking_id: order?.motorspeed_tracking_id,
+    delivery_address: order?.delivery_address || 'No address provided',
   };
 
   return (
@@ -31,71 +40,61 @@ const OrderCard = ({ order }) => {
       <div className="bg-green-950/50 px-6 py-4 border-b border-green-800">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <p className="text-sm text-green-300">Order ID: #{order.id}</p>
+            <p className="text-sm text-green-300">Order #{safeOrder.id}</p>
             <p className="text-sm text-green-200/70">
-              Placed on {formatDate(order.createdAt)}
+              {formatDate(safeOrder.transaction_date)}
             </p>
           </div>
           <div className="flex items-center space-x-4">
-            <Badge variant={getStatusColor(order.status)}>
-              {order.status}
+            <Badge variant={getStatusColor(safeOrder.escrow_status)}>
+              {safeOrder.escrow_status}
             </Badge>
             <p className="font-bold text-green-400">
-              {formatCurrency(order.total || order.grandTotal || 0)}
+              {formatCurrency(safeOrder.total_price)}
             </p>
           </div>
         </div>
       </div>
 
-      {/* Order Items */}
+      {/* Order Content */}
       <div className="p-6">
-        <div className="space-y-4">
-          {order.items && order.items.slice(0, 2).map((item) => (
-            <div key={item.id} className="flex items-center space-x-4">
-              <img
-                src={item.product?.images?.[0] || item.image || 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=60&h=60'}
-                alt={item.product?.name || item.name}
-                className="w-16 h-16 object-cover rounded-xl"
-              />
-              <div className="flex-1">
-                <Link to={`/products/${item.product?.id || item.productId}`} className="hover:text-green-300">
-                  <h4 className="font-medium text-white">{item.product?.name || item.name}</h4>
-                </Link>
-                <p className="text-sm text-green-300">
-                  Quantity: {item.quantity} × {formatCurrency(item.price)}
-                </p>
-              </div>
-              <p className="font-semibold text-green-400">
-                {formatCurrency(item.subtotal || item.price * item.quantity)}
-              </p>
-            </div>
-          ))}
-          
-          {order.items && order.items.length > 2 && (
-            <p className="text-sm text-green-300 text-center">
-              +{order.items.length - 2} more items
+        {/* Crop Info */}
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h3 className="text-lg font-semibold text-white">{safeOrder.crop_name}</h3>
+            <p className="text-sm text-green-300">
+              Quantity: {safeOrder.quantity_ordered_kg} kg
             </p>
+          </div>
+          {safeOrder.mpesa_receipt_no && (
+            <div className="text-right">
+              <p className="text-xs text-green-300">M-Pesa Receipt</p>
+              <p className="text-sm font-mono text-green-400">{safeOrder.mpesa_receipt_no}</p>
+            </div>
           )}
         </div>
 
+        {/* Delivery Address */}
+        <div className="flex items-start gap-2 text-sm text-green-300 mb-4">
+          <IoLocationOutline className="mt-0.5 flex-shrink-0" size={16} />
+          <span>{safeOrder.delivery_address}</span>
+        </div>
+
+        {/* Tracking (if available) */}
+        {safeOrder.motorspeed_tracking_id && (
+          <div className="flex items-center gap-2 text-sm text-green-300 mb-4">
+            <IoTimeOutline className="flex-shrink-0" size={16} />
+            <span>Tracking: {safeOrder.motorspeed_tracking_id}</span>
+          </div>
+        )}
+
         {/* Order Footer */}
-        <div className="mt-6 pt-4 border-t border-green-800 flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center text-sm text-green-300">
-            <IoLocationOutline className="mr-1" />
-            {order.deliveryAddress?.substring(0, 30)}...
-          </div>
-          <div className="flex space-x-3">
-            <Link to={`/orders/${order.id}`}>
-              <Button variant="outline" size="sm" className="border-2 border-green-400 text-green-300 hover:bg-green-800/30">
-                View Details
-              </Button>
-            </Link>
-            {order.status === 'pending' && (
-              <Button variant="danger" size="sm">
-                Cancel
-              </Button>
-            )}
-          </div>
+        <div className="mt-4 pt-4 border-t border-green-800 flex justify-end">
+          <Link to={`/orders/${safeOrder.id}`}>
+            <Button variant="outline" size="sm" className="border-2 border-green-400 text-green-300 hover:bg-green-800/30">
+              View Details
+            </Button>
+          </Link>
         </div>
       </div>
     </div>

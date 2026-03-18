@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
-import { orderApi } from '../api/orderApi';
+import { ordersApi } from '../api/ordersApi';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import { formatCurrency } from '../utils/formatCurrency';
@@ -13,39 +13,41 @@ import {
   IoCardOutline, 
   IoPersonOutline,
   IoCheckmarkCircle,
-  IoLeaf
+  IoCashOutline,
+  IoPhonePortraitOutline
 } from 'react-icons/io5';
 import { FiChevronRight } from 'react-icons/fi';
 import AOS from 'aos';
 import 'aos/dist/aos.css';
 
 // Header image
-const headerImage = "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&q=80&w=1600";
+const headerImage = "https://images.pexels.com/photos/3302501/pexels-photo-3302501.jpeg";
 const headerGradient = "bg-gradient-to-b from-transparent via-green-950/30 to-green-950";
 
 const Checkout = () => {
   const navigate = useNavigate();
   const { cartItems, cartTotal, clearCart } = useCart();
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState(1);
+  const [selectedListing, setSelectedListing] = useState(null);
   const [formData, setFormData] = useState({
     // Shipping Information
-    fullName: user?.name || '',
+    fullName: user?.full_name || user?.name || '',
     email: user?.email || '',
-    phone: '',
+    phone: user?.phone_number || '',
     address: '',
     city: '',
     state: '',
     zipCode: '',
     
-    // Payment Information
+    // Payment Information - Only M-Pesa (as per backend)
     paymentMethod: 'mpesa',
-    mpesaPhone: '',
-    cardNumber: '',
-    cardName: '',
-    expiryDate: '',
-    cvv: '',
+    mpesaPhone: user?.phone_number || '',
+    
+    // Order Details
+    marketplaceItemId: null,
+    quantity: 1,
   });
 
   useEffect(() => {
@@ -58,10 +60,32 @@ const Checkout = () => {
   }, []);
 
   useEffect(() => {
-    if (cartItems.length === 0) {
+    // Check for single item checkout from marketplace
+    const savedListing = localStorage.getItem('selectedListing');
+    if (savedListing) {
+      const listing = JSON.parse(savedListing);
+      setSelectedListing(listing);
+      setFormData(prev => ({
+        ...prev,
+        marketplaceItemId: listing.id,
+        quantity: 1,
+      }));
+      localStorage.removeItem('selectedListing');
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!selectedListing && cartItems.length === 0) {
       navigate('/cart');
     }
-  }, [cartItems, navigate]);
+  }, [cartItems, selectedListing, navigate]);
+
+  // Redirect to signin if not authenticated
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate('/signin', { state: { from: '/checkout' } });
+    }
+  }, [isAuthenticated, navigate]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -77,30 +101,47 @@ const Checkout = () => {
       return;
     }
 
+    // Validate M-Pesa phone number
+    const phoneRegex = /^(254|0)[71]\d{8}$/;
+    if (!phoneRegex.test(formData.mpesaPhone)) {
+      toast.error('Please enter a valid M-Pesa phone number (e.g., 0712345678 or 254712345678)');
+      return;
+    }
+
     setLoading(true);
     try {
-      const orderData = {
-        products: cartItems.map(item => ({
-          productId: item.id,
-          quantity: item.quantity,
-          price: item.price,
-          name: item.name,
-        })),
-        deliveryAddress: `${formData.address}, ${formData.city}, ${formData.state} ${formData.zipCode}`,
-        paymentMethod: formData.paymentMethod,
-        contactInfo: {
-          name: formData.fullName,
-          email: formData.email,
-          phone: formData.phone,
-        },
-        total: cartTotal,
-        grandTotal: cartTotal * 1.16, // Including tax
-      };
+      // If checking out a single item from marketplace
+      if (selectedListing) {
+        const orderData = {
+          marketplaceItemId: selectedListing.id,
+          quantity: formData.quantity,
+          phoneNumber: formData.mpesaPhone,
+          deliveryAddress: `${formData.address}, ${formData.city}, ${formData.state} ${formData.zipCode}`,
+          notes: '',
+        };
 
-      const response = await orderApi.createOrder(orderData);
+        const response = await ordersApi.placeOrder(orderData);
+        toast.success('Order placed! Check your phone for M-Pesa prompt.');
+        navigate('/orders');
+        return;
+      }
+
+      // For multiple items from cart - create separate orders for each
+      for (const item of cartItems) {
+        const orderData = {
+          marketplaceItemId: item.id,
+          quantity: item.quantity,
+          phoneNumber: formData.mpesaPhone,
+          deliveryAddress: `${formData.address}, ${formData.city}, ${formData.state} ${formData.zipCode}`,
+          notes: 'Order from cart',
+        };
+
+        await ordersApi.placeOrder(orderData);
+      }
+      
       clearCart();
-      toast.success('Order placed successfully!');
-      navigate(`/orders/${response.data?.id || response.id}`);
+      toast.success('Orders placed successfully! Check your phone for M-Pesa prompts.');
+      navigate('/orders');
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to place order');
     } finally {
@@ -114,7 +155,15 @@ const Checkout = () => {
     { number: 3, title: 'Review Order', icon: IoPersonOutline },
   ];
 
-  if (cartItems.length === 0) {
+  // Calculate totals
+  const subtotal = selectedListing 
+    ? selectedListing.price_per_kg * formData.quantity
+    : cartTotal;
+  
+  const tax = subtotal * 0.16; // 16% VAT
+  const grandTotal = subtotal + tax;
+
+  if ((!selectedListing && cartItems.length === 0) || !isAuthenticated) {
     return null;
   }
 
@@ -144,11 +193,11 @@ const Checkout = () => {
         {/* Back Button */}
         <div className="mb-6" data-aos="fade-right">
           <button
-            onClick={() => step > 1 ? setStep(step - 1) : navigate('/cart')}
+            onClick={() => step > 1 ? setStep(step - 1) : navigate(-1)}
             className="inline-flex items-center text-green-300 hover:text-green-100 bg-green-950/50 backdrop-blur-sm px-4 py-2 rounded-full border border-green-400/20"
           >
             <IoArrowBack className="mr-2" />
-            {step > 1 ? 'Back to Previous Step' : 'Back to Cart'}
+            {step > 1 ? 'Back to Previous Step' : 'Back'}
           </button>
         </div>
 
@@ -274,118 +323,65 @@ const Checkout = () => {
                     className="bg-green-950/50 border-green-700/50 text-white placeholder-green-300/50"
                     labelClassName="text-green-200"
                   />
+
+                  {selectedListing && (
+                    <div className="bg-green-950/50 rounded-xl p-4 border border-green-700/30">
+                      <h3 className="font-medium text-green-300 mb-2">Order Quantity</h3>
+                      <Input
+                        type="number"
+                        name="quantity"
+                        value={formData.quantity}
+                        onChange={handleInputChange}
+                        min="1"
+                        max={selectedListing.available_quantity_kg}
+                        step="0.5"
+                        required
+                        className="bg-green-950/60"
+                      />
+                      <p className="text-xs text-green-300/50 mt-2">
+                        Available: {selectedListing.available_quantity_kg} kg
+                      </p>
+                    </div>
+                  )}
                 </div>
               )}
 
-              {/* Step 2: Payment Method */}
+              {/* Step 2: Payment Method - Only M-Pesa (as per backend) */}
               {step === 2 && (
                 <div className="space-y-4">
                   <h2 className="text-xl font-semibold text-white mb-4">Payment Method</h2>
                   
-                  <div className="space-y-3">
-                    <label className={`flex items-center p-4 border rounded-xl cursor-pointer transition-all duration-300 ${
-                      formData.paymentMethod === 'mpesa'
-                        ? 'border-green-400 bg-green-800/30'
-                        : 'border-green-700/50 bg-green-950/30 hover:bg-green-800/20'
-                    }`}>
-                      <input
-                        type="radio"
-                        name="paymentMethod"
-                        value="mpesa"
-                        checked={formData.paymentMethod === 'mpesa'}
-                        onChange={handleInputChange}
-                        className="mr-3 accent-green-400"
-                      />
-                      <div>
-                        <span className="font-medium text-white">M-Pesa</span>
-                        <p className="text-sm text-green-300">Pay via M-Pesa mobile money</p>
-                      </div>
-                    </label>
-
-                    {formData.paymentMethod === 'mpesa' && (
-                      <div className="ml-8 mt-3">
-                        <Input
-                          label="M-Pesa Phone Number"
-                          name="mpesaPhone"
-                          value={formData.mpesaPhone}
-                          onChange={handleInputChange}
-                          placeholder="e.g., 0712345678"
-                          required={formData.paymentMethod === 'mpesa'}
-                          className="bg-green-950/50 border-green-700/50 text-white placeholder-green-300/50"
-                          labelClassName="text-green-200"
-                        />
-                      </div>
-                    )}
-
-                    <label className={`flex items-center p-4 border rounded-xl cursor-pointer transition-all duration-300 ${
-                      formData.paymentMethod === 'card'
-                        ? 'border-green-400 bg-green-800/30'
-                        : 'border-green-700/50 bg-green-950/30 hover:bg-green-800/20'
-                    }`}>
-                      <input
-                        type="radio"
-                        name="paymentMethod"
-                        value="card"
-                        checked={formData.paymentMethod === 'card'}
-                        onChange={handleInputChange}
-                        className="mr-3 accent-green-400"
-                      />
-                      <div>
-                        <span className="font-medium text-white">Credit/Debit Card</span>
-                        <p className="text-sm text-green-300">Pay with Visa, Mastercard</p>
-                      </div>
-                    </label>
-
-                    {formData.paymentMethod === 'card' && (
-                      <div className="ml-8 mt-3 space-y-3">
-                        <Input
-                          label="Card Number"
-                          name="cardNumber"
-                          value={formData.cardNumber}
-                          onChange={handleInputChange}
-                          placeholder="1234 5678 9012 3456"
-                          required={formData.paymentMethod === 'card'}
-                          className="bg-green-950/50 border-green-700/50 text-white placeholder-green-300/50"
-                          labelClassName="text-green-200"
-                        />
-                        
-                        <Input
-                          label="Name on Card"
-                          name="cardName"
-                          value={formData.cardName}
-                          onChange={handleInputChange}
-                          required={formData.paymentMethod === 'card'}
-                          className="bg-green-950/50 border-green-700/50 text-white placeholder-green-300/50"
-                          labelClassName="text-green-200"
-                        />
-                        
-                        <div className="grid grid-cols-2 gap-4">
-                          <Input
-                            label="Expiry Date"
-                            name="expiryDate"
-                            value={formData.expiryDate}
-                            onChange={handleInputChange}
-                            placeholder="MM/YY"
-                            required={formData.paymentMethod === 'card'}
-                            className="bg-green-950/50 border-green-700/50 text-white placeholder-green-300/50"
-                            labelClassName="text-green-200"
-                          />
-                          
-                          <Input
-                            label="CVV"
-                            name="cvv"
-                            type="password"
-                            value={formData.cvv}
-                            onChange={handleInputChange}
-                            placeholder="123"
-                            maxLength="3"
-                            required={formData.paymentMethod === 'card'}
-                            className="bg-green-950/50 border-green-700/50 text-white placeholder-green-300/50"
-                            labelClassName="text-green-200"
-                          />
+                  <div className="space-y-4">
+                    {/* M-Pesa Option (Only option) */}
+                    <div className={`flex items-center p-5 border-2 rounded-xl border-green-400 bg-green-800/40 shadow-lg shadow-green-900/30`}>
+                      <div className="flex items-center gap-3 flex-1">
+                        <div className="w-12 h-12 bg-green-600/30 rounded-full flex items-center justify-center border border-green-400/30">
+                          <IoPhonePortraitOutline className="text-green-400 text-xl" />
+                        </div>
+                        <div>
+                          <span className="font-semibold text-white text-lg block">M-Pesa</span>
+                          <p className="text-sm text-green-300">Pay instantly via mobile money</p>
                         </div>
                       </div>
-                    )}
+                    </div>
+
+                    <div className="mt-4 p-4 bg-green-950/40 rounded-xl border border-green-700/30">
+                      <Input
+                        label="M-Pesa Phone Number"
+                        name="mpesaPhone"
+                        value={formData.mpesaPhone}
+                        onChange={handleInputChange}
+                        placeholder="0712345678 or 254712345678"
+                        required
+                        className="bg-green-950/60 border-green-700/50 text-white placeholder-green-300/50"
+                        labelClassName="text-green-200 font-medium"
+                      />
+                      <p className="text-xs text-green-300/50 mt-2">
+                        You will receive an STK push prompt on your phone to complete payment
+                      </p>
+                    </div>
+
+                    {/* Note: Cash on Delivery removed as backend only supports M-Pesa */}
                   </div>
                 </div>
               )}
@@ -397,7 +393,10 @@ const Checkout = () => {
                   
                   {/* Shipping Details */}
                   <div className="bg-green-950/50 rounded-xl p-4 border border-green-700/30">
-                    <h3 className="font-medium text-green-300 mb-2">Shipping To:</h3>
+                    <h3 className="font-medium text-green-300 mb-2 flex items-center gap-2">
+                      <IoLocationOutline className="text-green-400" />
+                      Shipping To:
+                    </h3>
                     <p className="text-white">{formData.fullName}</p>
                     <p className="text-green-200">{formData.address}</p>
                     <p className="text-green-200">
@@ -408,29 +407,41 @@ const Checkout = () => {
 
                   {/* Payment Method */}
                   <div className="bg-green-950/50 rounded-xl p-4 border border-green-700/30">
-                    <h3 className="font-medium text-green-300 mb-2">Payment Method:</h3>
-                    <p className="text-white">
-                      {formData.paymentMethod === 'mpesa' ? 'M-Pesa' : 'Credit/Debit Card'}
+                    <h3 className="font-medium text-green-300 mb-2 flex items-center gap-2">
+                      <IoCardOutline className="text-green-400" />
+                      Payment Method:
+                    </h3>
+                    <p className="text-white">M-Pesa</p>
+                    <p className="text-green-200 mt-2">
+                      Phone Number: {formData.mpesaPhone}
                     </p>
-                    {formData.paymentMethod === 'mpesa' && (
-                      <p className="text-green-200">Phone: {formData.mpesaPhone}</p>
-                    )}
                   </div>
 
                   {/* Order Items */}
                   <div className="bg-green-950/50 rounded-xl p-4 border border-green-700/30">
                     <h3 className="font-medium text-green-300 mb-2">Order Items:</h3>
-                    <div className="space-y-2">
-                      {cartItems.map((item) => (
-                        <div key={item.id} className="flex justify-between text-sm">
+                    <div className="space-y-2 max-h-60 overflow-y-auto custom-scrollbar pr-2">
+                      {selectedListing ? (
+                        <div className="flex justify-between text-sm py-2 border-b border-green-800/50">
                           <span className="text-green-200">
-                            {item.name} x {item.quantity}
+                            {selectedListing.crop_name} x {formData.quantity} kg
                           </span>
                           <span className="font-medium text-white">
-                            {formatCurrency(item.price * item.quantity)}
+                            {formatCurrency(selectedListing.price_per_kg * formData.quantity)}
                           </span>
                         </div>
-                      ))}
+                      ) : (
+                        cartItems.map((item) => (
+                          <div key={item.id} className="flex justify-between text-sm py-2 border-b border-green-800/50 last:border-0">
+                            <span className="text-green-200">
+                              {item.name} x {item.quantity} {item.unit}
+                            </span>
+                            <span className="font-medium text-white">
+                              {formatCurrency(item.price * item.quantity)}
+                            </span>
+                          </div>
+                        ))
+                      )}
                     </div>
                   </div>
                 </div>
@@ -454,7 +465,7 @@ const Checkout = () => {
                   loading={loading}
                   className={`bg-green-600 hover:bg-green-700 text-white ${step === 1 ? 'ml-auto' : ''}`}
                 >
-                  {step < 3 ? 'Continue' : 'Place Order'}
+                  {step < 3 ? 'Continue' : 'Place Order & Pay via M-Pesa'}
                 </Button>
               </div>
             </form>
@@ -466,22 +477,33 @@ const Checkout = () => {
               <h2 className="text-lg font-semibold text-white mb-4">Order Summary</h2>
               
               <div className="space-y-3 mb-4 max-h-60 overflow-y-auto custom-scrollbar">
-                {cartItems.map((item) => (
-                  <div key={item.id} className="flex justify-between text-sm">
+                {selectedListing ? (
+                  <div className="flex justify-between text-sm">
                     <span className="text-green-200">
-                      {item.name} x {item.quantity}
+                      {selectedListing.crop_name} x {formData.quantity} kg
                     </span>
                     <span className="text-white font-medium">
-                      {formatCurrency(item.price * item.quantity)}
+                      {formatCurrency(selectedListing.price_per_kg * formData.quantity)}
                     </span>
                   </div>
-                ))}
+                ) : (
+                  cartItems.map((item) => (
+                    <div key={item.id} className="flex justify-between text-sm">
+                      <span className="text-green-200">
+                        {item.name} x {item.quantity}
+                      </span>
+                      <span className="text-white font-medium">
+                        {formatCurrency(item.price * item.quantity)}
+                      </span>
+                    </div>
+                  ))
+                )}
               </div>
 
               <div className="border-t border-green-700 pt-4 space-y-2">
                 <div className="flex justify-between">
                   <span className="text-green-300">Subtotal</span>
-                  <span className="font-medium text-white">{formatCurrency(cartTotal)}</span>
+                  <span className="font-medium text-white">{formatCurrency(subtotal)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-green-300">Shipping</span>
@@ -489,17 +511,26 @@ const Checkout = () => {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-green-300">Tax (16% VAT)</span>
-                  <span className="text-white">{formatCurrency(cartTotal * 0.16)}</span>
+                  <span className="text-white">{formatCurrency(tax)}</span>
                 </div>
                 <div className="border-t border-green-700 pt-2 mt-2">
                   <div className="flex justify-between font-bold">
                     <span className="text-white">Total</span>
                     <span className="text-green-400 text-xl">
-                      {formatCurrency(cartTotal * 1.16)}
+                      {formatCurrency(grandTotal)}
                     </span>
                   </div>
                 </div>
               </div>
+
+              {/* Payment Method Summary */}
+              {step === 3 && (
+                <div className="mt-4 pt-4 border-t border-green-700">
+                  <p className="text-sm text-green-300">
+                    You will receive an M-Pesa STK push on {formData.mpesaPhone}
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </div>

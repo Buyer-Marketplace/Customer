@@ -1,117 +1,102 @@
-import { useState, useEffect } from 'react';
-import { orderApi } from '../api/orderApi';
+import { useState, useEffect, useCallback } from 'react';
+import { ordersApi } from '../api/ordersApi';
+import toast from 'react-hot-toast';
 
 export const useOrders = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [placingOrder, setPlacingOrder] = useState(false);
   const [error, setError] = useState(null);
-  const [totalPages, setTotalPages] = useState(1);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalOrders, setTotalOrders] = useState(0);
 
-  const fetchOrders = async (params = {}) => {
+  const fetchMyOrders = useCallback(async () => {
+    setLoading(true);
+    setError(null);
     try {
-      setLoading(true);
-      const response = await orderApi.getAllOrders({
-        page: currentPage,
-        ...params
-      });
-      
-      if (response && response.data) {
-        setOrders(response.data);
-        setTotalPages(response.totalPages || 1);
-        setTotalOrders(response.total || response.data.length || 0);
-      }
-      
-      setError(null);
+      const response = await ordersApi.getMyOrders();
+      setOrders(response.data || []);
     } catch (err) {
-      console.error('Error fetching orders:', err);
-      setError(err.message || 'Failed to fetch orders');
-      setOrders([]);
+      const message = err.response?.data?.message || 'Failed to fetch orders';
+      setError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const createOrder = async (orderData) => {
+  useEffect(() => {
+    fetchMyOrders();
+  }, [fetchMyOrders]);
+
+  const getOrderById = useCallback(async (id) => {
+    setLoading(true);
     try {
-      setLoading(true);
-      const response = await orderApi.createOrder(orderData);
-      setError(null);
+      const order = await ordersApi.getOrderById(id);
+      return order;
+    } catch (err) {
+      const message = err.response?.data?.message || 'Failed to fetch order';
+      toast.error(message);
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const placeOrder = useCallback(async (orderData) => {
+    setPlacingOrder(true);
+    setError(null);
+    try {
+      const response = await ordersApi.placeOrder(orderData);
+      toast.success('Order placed! Check your phone for M-Pesa prompt.');
       
-      // Refresh orders list
-      await fetchOrders();
+      // Refresh orders after placing new order
+      await fetchMyOrders();
       
       return response;
     } catch (err) {
-      console.error('Error creating order:', err);
-      setError(err.message || 'Failed to create order');
+      const message = err.response?.data?.message || 'Failed to place order';
+      setError(message);
+      toast.error(message);
       throw err;
     } finally {
-      setLoading(false);
+      setPlacingOrder(false);
+    }
+  }, [fetchMyOrders]);
+
+  const getOrderStatusColor = (status) => {
+    switch (status?.toLowerCase()) {
+      case 'pending':
+        return 'warning';
+      case 'paid':
+        return 'success';
+      case 'delivered':
+        return 'primary';
+      default:
+        return 'default';
     }
   };
 
-  const getOrderById = async (id) => {
-    try {
-      setLoading(true);
-      const response = await orderApi.getOrderById(id);
-      setError(null);
-      return response.data || response;
-    } catch (err) {
-      console.error('Error fetching order:', err);
-      setError(err.message || 'Failed to fetch order');
-      throw err;
-    } finally {
-      setLoading(false);
+  const getOrderStatusText = (status) => {
+    switch (status?.toLowerCase()) {
+      case 'pending':
+        return 'Payment Pending';
+      case 'paid':
+        return 'Payment Received';
+      case 'delivered':
+        return 'Delivered';
+      default:
+        return status || 'Unknown';
     }
-  };
-
-  const cancelOrder = async (id) => {
-    try {
-      setLoading(true);
-      const response = await orderApi.cancelOrder(id);
-      
-      // Update local state
-      setOrders(prev => 
-        prev.map(o => o.id === id ? { ...o, status: 'cancelled' } : o)
-      );
-      
-      setError(null);
-      return response;
-    } catch (err) {
-      console.error('Error cancelling order:', err);
-      setError(err.message || 'Failed to cancel order');
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const getOrderStats = () => {
-    const stats = {
-      total: totalOrders,
-      pending: orders.filter(o => o.status === 'pending').length,
-      processing: orders.filter(o => o.status === 'processing').length,
-      shipped: orders.filter(o => o.status === 'shipped').length,
-      delivered: orders.filter(o => o.status === 'delivered').length,
-      cancelled: orders.filter(o => o.status === 'cancelled').length,
-    };
-    return stats;
   };
 
   return {
     orders,
     loading,
+    placingOrder,
     error,
-    totalPages,
-    currentPage,
-    totalOrders,
-    setCurrentPage,
-    fetchOrders,
-    createOrder,
+    fetchMyOrders,
     getOrderById,
-    cancelOrder,
-    getOrderStats,
+    placeOrder,
+    getOrderStatusColor,
+    getOrderStatusText,
   };
 };

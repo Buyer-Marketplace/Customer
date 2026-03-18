@@ -14,10 +14,10 @@ export { default as Container } from './layout/Container';
 export { default as Sidebar } from './layout/Sidebar';
 
 // Product Components
-export { default as ProductCard } from './product/ProductCard';
-export { default as ProductGallery } from './product/ProductGallery';
-export { default as ProductDetails } from './product/ProductDetails';
-export { default as StockIndicator } from './product/StockIndicator';
+export { default as ProductCard } from './crop/CropCard.jsx';
+export { default as ProductGallery } from './crop/ProductGallery';
+export { default as ProductDetails } from './crop/ProductDetails';
+export { default as StockIndicator } from './crop/StockIndicator';
 
 // Category Components
 export { default as CategoryCard } from './category/CategoryCard';

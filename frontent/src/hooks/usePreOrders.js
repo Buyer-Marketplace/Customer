@@ -1,146 +1,123 @@
-import { useState, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { preorderApi } from '../api/preorderApi';
 
-export const usePreorders = () => {
+export const usePreOrders = () => {
   const [availablePreorders, setAvailablePreorders] = useState([]);
-  const [userPreorders, setUserPreorders] = useState([]);
+  const [myPreorders, setMyPreorders] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [totalPages, setTotalPages] = useState(1);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPreorders, setTotalPreorders] = useState(0);
 
-  const fetchAvailablePreorders = async (params = {}) => {
+  const fetchAvailablePreorders = useCallback(async () => {
+    setLoading(true);
+    setError(null);
     try {
-      setLoading(true);
-      const response = await preorderApi.getAvailablePreorders({
-        page: currentPage,
-        ...params
-      });
-      
-      if (response && response.data) {
-        setAvailablePreorders(response.data);
-        setTotalPages(response.totalPages || 1);
-        setTotalPreorders(response.total || response.data.length || 0);
-      }
-      
-      setError(null);
+      const response = await preorderApi.getAvailablePreorders();
+      setAvailablePreorders(response.data || []);
     } catch (err) {
       console.error('Error fetching available preorders:', err);
-      setError(err.message || 'Failed to fetch available preorders');
+      setError(err.response?.data?.message || 'Failed to fetch available preorders');
       setAvailablePreorders([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const fetchUserPreorders = async (userId, params = {}) => {
+  const fetchMyPreorders = useCallback(async () => {
+    setLoading(true);
+    setError(null);
     try {
-      setLoading(true);
-      const response = await preorderApi.getUserPreorders(userId, {
-        page: currentPage,
-        ...params
-      });
-      
-      if (response && response.data) {
-        setUserPreorders(response.data);
-        setTotalPages(response.totalPages || 1);
-      }
-      
-      setError(null);
+      const response = await preorderApi.getMyPreorders();
+      setMyPreorders(response.data || []);
     } catch (err) {
-      console.error('Error fetching user preorders:', err);
-      setError(err.message || 'Failed to fetch user preorders');
-      setUserPreorders([]);
+      console.error('Error fetching my preorders:', err);
+      setError(err.response?.data?.message || 'Failed to fetch your preorders');
+      setMyPreorders([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const createPreorder = async (preorderData) => {
+  const getPreorderById = useCallback(async (id) => {
+    setLoading(true);
+    setError(null);
     try {
-      setLoading(true);
+      const response = await preorderApi.getPreorderById(id);
+      return response.data;
+    } catch (err) {
+      console.error(`Error fetching preorder ${id}:`, err);
+      setError(err.response?.data?.message || 'Failed to fetch preorder details');
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const createPreorder = useCallback(async (preorderData) => {
+    setLoading(true);
+    setError(null);
+    try {
       const response = await preorderApi.createPreorder(preorderData);
-      setError(null);
-      
-      // Refresh available preorders
-      await fetchAvailablePreorders();
-      
-      return response;
+      return response.data;
     } catch (err) {
       console.error('Error creating preorder:', err);
-      setError(err.message || 'Failed to create preorder');
+      setError(err.response?.data?.message || 'Failed to create preorder');
       throw err;
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const cancelPreorder = async (id) => {
+  const cancelPreorder = useCallback(async (id) => {
+    setLoading(true);
+    setError(null);
     try {
-      setLoading(true);
       const response = await preorderApi.cancelPreorder(id);
-      
-      // Update local state
-      setUserPreorders(prev => 
-        prev.map(p => p.id === id ? { ...p, status: 'cancelled' } : p)
-      );
-      
-      // Also update available preorders if needed
-      setAvailablePreorders(prev => 
-        prev.map(p => p.id === id ? { ...p, status: 'cancelled' } : p)
-      );
-      
-      setError(null);
-      return response;
+      return response.data;
     } catch (err) {
-      console.error('Error cancelling preorder:', err);
-      setError(err.message || 'Failed to cancel preorder');
+      console.error(`Error cancelling preorder ${id}:`, err);
+      setError(err.response?.data?.message || 'Failed to cancel preorder');
       throw err;
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const getPreorderById = async (id) => {
-    try {
-      setLoading(true);
-      const response = await preorderApi.getPreorderById(id);
-      setError(null);
-      return response.data || response;
-    } catch (err) {
-      console.error('Error fetching preorder:', err);
-      setError(err.message || 'Failed to fetch preorder');
-      throw err;
-    } finally {
-      setLoading(false);
+  const getStatusColor = (status) => {
+    switch (status?.toLowerCase()) {
+      case 'open':
+        return 'success';
+      case 'pending':
+        return 'warning';
+      case 'confirmed':
+        return 'info';
+      case 'fulfilled':
+        return 'primary';
+      case 'cancelled':
+        return 'danger';
+      default:
+        return 'default';
     }
   };
 
-  const getPreorderStats = () => {
-    const stats = {
-      total: totalPreorders,
-      open: availablePreorders.filter(p => p.status === 'open').length,
-      fulfilled: availablePreorders.filter(p => p.status === 'fulfilled').length,
-      cancelled: availablePreorders.filter(p => p.status === 'cancelled').length,
-    };
-    return stats;
+  const calculateDaysLeft = (deadlineDate) => {
+    const deadline = new Date(deadlineDate);
+    const today = new Date();
+    const diffTime = deadline - today;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
   };
 
   return {
     availablePreorders,
-    userPreorders,
+    myPreorders,
     loading,
     error,
-    totalPages,
-    currentPage,
-    totalPreorders,
-    setCurrentPage,
     fetchAvailablePreorders,
-    fetchUserPreorders,
+    fetchMyPreorders,
+    getPreorderById,
     createPreorder,
     cancelPreorder,
-    getPreorderById,
-    getPreorderStats,
+    getStatusColor,
+    calculateDaysLeft,
   };
 };

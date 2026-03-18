@@ -1,8 +1,7 @@
 import axios from 'axios';
 import toast from 'react-hot-toast';
-import { setupMockInterceptor } from './mockInterceptor';
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
 
 const axiosInstance = axios.create({
   baseURL: BASE_URL,
@@ -17,11 +16,7 @@ const showToast = (message, type = 'error') => {
   if (toastId) {
     toast.dismiss(toastId);
   }
-  if (type === 'error') {
-    toastId = toast.error(message);
-  } else {
-    toastId = toast.success(message);
-  }
+  toastId = type === 'error' ? toast.error(message) : toast.success(message);
 };
 
 // Request interceptor to add token
@@ -33,50 +28,39 @@ axiosInstance.interceptors.request.use(
     }
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
-// Setup mock interceptor for development (MUST come first)
-if (import.meta.env.DEV) {
-  setupMockInterceptor(axiosInstance);
-}
-
-// Response interceptor for handling both real and mock responses
+// Response interceptor for error handling
 axiosInstance.interceptors.response.use(
-  (response) => {
-    return response;
-  },
+  (response) => response,
   (error) => {
-    // Check if this is a mock response (from our interceptor)
-    if (error && error.mockResponse) {
-      // Create a successful response from the mock data
-      const mockResponse = {
-        data: error.mockResponse.data,
-        status: 200,
-        statusText: 'OK',
-        headers: {},
-        config: error.config
-      };
+    // Handle authentication errors
+    if (error.response?.status === 401) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
       
-      if (import.meta.env.DEV) {
-        console.log(`✅ Mock API Success: ${error.config?.url}`);
+      if (!window.location.pathname.includes('/signin')) {
+        showToast('Session expired. Please sign in again.');
+        setTimeout(() => {
+          window.location.href = '/signin';
+        }, 1500);
       }
-      
-      // Return successful promise with mock data
-      return Promise.resolve(mockResponse);
     }
 
-    // Handle real network errors - SILENT in development
+    // Handle validation errors
+    if (error.response?.status === 422) {
+      showToast(error.response.data?.message || 'Validation failed');
+    }
+
+    // Handle server errors
+    if (error.response?.status >= 500) {
+      showToast('Server error. Please try again later.');
+    }
+
+    // Handle network errors
     if (error.code === 'ERR_NETWORK') {
-      if (import.meta.env.DEV) {
-        // In development, just log to console
-        console.log('ℹ️ Development mode: Using mock data (backend not running)');
-        // Don't reject - let the mock interceptor handle it
-        return Promise.reject(error);
-      }
-      showToast('Network error. Please check your connection.');
+      showToast('Network error. Cannot connect to server.');
     }
     
     return Promise.reject(error);

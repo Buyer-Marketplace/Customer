@@ -1,34 +1,65 @@
 import React from 'react';
+import { 
+  IoCheckmarkCircle, 
+  IoTimeOutline, 
+  IoWarningOutline,
+  IoLeafOutline,
+  IoStarOutline
+} from 'react-icons/io5';
 
-const Badge = ({ children, variant = 'default', className = '', size = 'md' }) => {
-  const variants = {
-    default: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200 border border-gray-200 dark:border-gray-700',
-    primary: 'bg-primary-100 text-primary-800 dark:bg-primary-900/30 dark:text-primary-300 border border-primary-200 dark:border-primary-800',
-    secondary: 'bg-earth-100 text-earth-800 dark:bg-earth-900/30 dark:text-earth-300 border border-earth-200 dark:border-earth-800',
-    success: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 border border-green-200 dark:border-green-800',
-    warning: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300 border border-yellow-200 dark:border-yellow-800',
-    danger: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 border border-red-200 dark:border-red-800',
-    info: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 border border-blue-200 dark:border-blue-800',
-  };
+const variantClasses = {
+  default: 'bg-green-600/20 text-green-300 border-green-500/30',
+  success: 'bg-emerald-600/20 text-emerald-300 border-emerald-500/30',
+  warning: 'bg-amber-600/20 text-amber-300 border-amber-500/30',
+  danger: 'bg-rose-600/20 text-rose-300 border-rose-500/30',
+  info: 'bg-sky-600/20 text-sky-300 border-sky-500/30',
+  organic: 'bg-green-600/30 text-green-300 border-green-400/50',
+  preorder: 'bg-purple-600/20 text-purple-300 border-purple-500/30',
+  featured: 'bg-yellow-600/20 text-yellow-300 border-yellow-500/30',
+};
 
-  const sizes = {
-    sm: 'px-2 py-0.5 text-xs',
-    md: 'px-2.5 py-0.5 text-xs',
-    lg: 'px-3 py-1 text-sm',
-  };
+const sizeClasses = {
+  sm: 'px-2 py-0.5 text-xs',
+  md: 'px-2.5 py-1 text-sm',
+  lg: 'px-3 py-1.5 text-base'
+};
 
-  const classes = [
-    'inline-flex items-center font-medium rounded-full',
-    sizes[size],
-    variants[variant],
-    className,
-  ].filter(Boolean).join(' ');
+const iconMap = {
+  success: IoCheckmarkCircle,
+  warning: IoWarningOutline,
+  danger: IoWarningOutline,
+  organic: IoLeafOutline,
+  preorder: IoTimeOutline,
+  featured: IoStarOutline
+};
 
+const Badge = ({ 
+  children, 
+  variant = 'default', 
+  size = 'sm',
+  icon: CustomIcon,
+  className = '',
+  showIcon = true,
+  ...props 
+}) => {
+  const Icon = CustomIcon || iconMap[variant];
+  
   return (
-    <span className={classes}>
+    <span
+      className={`
+        inline-flex items-center gap-1 font-medium
+        border backdrop-blur-sm rounded-full
+        ${variantClasses[variant] || variantClasses.default}
+        ${sizeClasses[size]}
+        ${className}
+      `}
+      {...props}
+    >
+      {showIcon && Icon && <Icon size={size === 'lg' ? 16 : size === 'md' ? 14 : 12} />}
       {children}
     </span>
   );
 };
 
+// Default export - this is what ProductCard uses
 export default Badge;

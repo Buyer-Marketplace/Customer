@@ -2,62 +2,70 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { formatCurrency } from '../../utils/formatCurrency';
 import Button from '../ui/Button';
+import { IoShieldCheckmarkOutline } from 'react-icons/io5';
 
-const CartSummary = ({ items, total, subtotal, shipping, tax }) => {
+const CartSummary = ({ items = 0, subtotal = 0, shipping = 0, tax = 0, onCheckout }) => {
   const navigate = useNavigate();
 
   const calculateTotal = () => {
-    return subtotal + (shipping || 0) + (tax || 0);
+    return subtotal + shipping + tax;
+  };
+
+  const handleCheckout = () => {
+    if (onCheckout) {
+      onCheckout();
+    } else {
+      navigate('/checkout');
+    }
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6">
-      <h3 className="text-lg font-semibold mb-4">Order Summary</h3>
+    <div className="bg-gradient-to-br from-green-900 to-green-800 backdrop-blur-sm rounded-3xl p-6 border border-green-400/20 shadow-xl sticky top-24">
+      <h2 className="text-xl font-bold text-white mb-4 flex items-center">
+        <span>Order Summary</span>
+        <span className="ml-2 text-sm font-normal text-green-300 bg-green-800/50 px-2 py-1 rounded-full">
+          {items} {items === 1 ? 'item' : 'items'}
+        </span>
+      </h2>
       
       <div className="space-y-3 mb-4">
-        <div className="flex justify-between">
-          <span className="text-gray-600">Subtotal</span>
-          <span className="font-medium">{formatCurrency(subtotal)}</span>
+        <div className="flex justify-between text-sm">
+          <span className="text-green-300">Subtotal</span>
+          <span className="text-white font-medium">{formatCurrency(subtotal)}</span>
         </div>
         
-        {shipping !== undefined && (
-          <div className="flex justify-between">
-            <span className="text-gray-600">Shipping</span>
-            <span className="font-medium">
-              {shipping === 0 ? 'Free' : formatCurrency(shipping)}
-            </span>
-          </div>
-        )}
+        <div className="flex justify-between text-sm">
+          <span className="text-green-300">Shipping</span>
+          <span className="text-green-400 font-medium">
+            {shipping === 0 ? 'Free' : formatCurrency(shipping)}
+          </span>
+        </div>
         
-        {tax !== undefined && (
-          <div className="flex justify-between">
-            <span className="text-gray-600">Tax</span>
-            <span className="font-medium">{formatCurrency(tax)}</span>
-          </div>
-        )}
-        
-        <div className="border-t pt-3">
-          <div className="flex justify-between font-bold">
-            <span>Total</span>
-            <span className="text-primary-600 text-xl">
+        <div className="flex justify-between text-sm">
+          <span className="text-green-300">Tax (16% VAT)</span>
+          <span className="text-white">{formatCurrency(tax)}</span>
+        </div>
+      </div>
+
+      <div className="border-t border-green-700 pt-4 mb-6">
+        <div className="flex justify-between items-center">
+          <span className="text-white font-semibold">Total</span>
+          <div className="text-right">
+            <span className="text-2xl font-bold text-green-400">
               {formatCurrency(calculateTotal())}
             </span>
+            <span className="block text-xs text-green-300/70">Incl. taxes</span>
           </div>
         </div>
       </div>
 
-      {/* Item Count */}
-      <p className="text-sm text-gray-600 mb-4">
-        {items} {items === 1 ? 'item' : 'items'} in cart
-      </p>
-
-      {/* Action Buttons */}
-      <div className="space-y-2">
+      <div className="space-y-3">
         <Button
           variant="primary"
           size="lg"
           fullWidth
-          onClick={() => navigate('/checkout')}
+          onClick={handleCheckout}
+          className="bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-white shadow-lg shadow-green-500/25"
         >
           Proceed to Checkout
         </Button>
@@ -67,20 +75,35 @@ const CartSummary = ({ items, total, subtotal, shipping, tax }) => {
           size="lg"
           fullWidth
           onClick={() => navigate('/products')}
+          className="border-green-600 text-green-400 hover:bg-green-800/50 hover:text-white"
         >
           Continue Shopping
         </Button>
       </div>
 
-      {/* Payment Methods */}
+      <div className="mt-6 flex items-center justify-center gap-2 text-xs text-green-300/70">
+        <IoShieldCheckmarkOutline className="text-green-400" size={16} />
+        <span>Secure checkout powered by M-Pesa</span>
+      </div>
+
       <div className="mt-4 text-center">
-        <p className="text-xs text-gray-500 mb-2">We accept:</p>
+        <p className="text-xs text-green-300/50 mb-2">We accept:</p>
         <div className="flex justify-center space-x-2">
-          <span className="px-2 py-1 bg-gray-100 rounded text-xs">M-Pesa</span>
-          <span className="px-2 py-1 bg-gray-100 rounded text-xs">Visa</span>
-          <span className="px-2 py-1 bg-gray-100 rounded text-xs">Mastercard</span>
+          <span className="px-3 py-1 bg-green-800/50 border border-green-700 rounded-full text-xs text-green-300">
+            M-Pesa
+          </span>
+          <span className="px-3 py-1 bg-green-800/50 border border-green-700 rounded-full text-xs text-green-300">
+            Visa
+          </span>
+          <span className="px-3 py-1 bg-green-800/50 border border-green-700 rounded-full text-xs text-green-300">
+            Mastercard
+          </span>
         </div>
       </div>
+
+      <p className="text-[10px] text-green-300/30 text-center mt-4">
+        By proceeding, you agree to our Terms of Service and Privacy Policy
+      </p>
     </div>
   );
 };

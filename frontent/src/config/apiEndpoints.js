@@ -1,58 +1,45 @@
-// Centralized API endpoints configuration
+// Centralized API endpoints configuration based on Agritech Database Schema
 const API_ENDPOINTS = {
-  // Auth endpoints
+  // 🔐 Authentication
   AUTH: {
-    LOGIN: '/auth/login',
-    REGISTER: '/auth/register',
-    PROFILE: '/auth/profile',
-    LOGOUT: '/auth/logout',
+    GOOGLE_OAUTH: '/auth/google-oauth',  // POST - Google OAuth login
   },
   
-  // Product endpoints
-  PRODUCTS: {
-    BASE: '/products',
-    DETAIL: (id) => `/products/${id}`,
-    FEATURED: '/products/featured',
-    SEARCH: '/products/search',
-    BY_CATEGORY: (categoryId) => `/products/category/${categoryId}`,
-    HARVEST_CALENDAR: '/products/harvest-calendar',
+  // 🌱 Crops (Public)
+  CROPS: {
+    BASE: '/buyer/crops',                    // GET - All active crops
+    ITEMS_BY_CROP: (cropId) => `/buyer/crops/${cropId}/items`, // GET - Items for specific crop
   },
   
-  // Category endpoints
-  CATEGORIES: {
-    BASE: '/categories',
-    DETAIL: (id) => `/categories/${id}`,
-    WITH_PRODUCTS: (id) => `/categories/${id}/products`,
+  // 🛒 Marketplace (Public)
+  MARKETPLACE: {
+    ACTIVE: '/marketplace/active',  // GET - All active marketplace listings
   },
   
-  // Farmer endpoints
-  FARMERS: {
-    BASE: '/farmers',
-    DETAIL: (id) => `/farmers/${id}`,
-    PRODUCTS: (id) => `/farmers/${id}/products`,
-  },
-  
-  // Order endpoints
+  // 💳 Orders (Protected)
   ORDERS: {
-    BASE: '/orders',
-    DETAIL: (id) => `/orders/${id}`,
-    CANCEL: (id) => `/orders/${id}/cancel`,
+    PLACE: '/buyer/orders/place',    // POST - Place order with M-Pesa
+    MY_ORDERS: '/buyer/orders',       // GET - User's order history
   },
   
-  // Preorder endpoints
+  // 📦 Pre-Orders (Future Implementation)
   PREORDERS: {
     BASE: '/preorders',
-    DETAIL: (id) => `/preorders/${id}`,
-    CANCEL: (id) => `/preorders/${id}/cancel`,
     AVAILABLE: '/preorders/available',
+    MY_PREORDERS: '/user/preorders',
   },
   
-  // User endpoints
-  USERS: {
-    BASE: '/users',
-    DETAIL: (id) => `/users/${id}`,
-    PREORDERS: (id) => `/users/${id}/preorders`,
-    ORDERS: (id) => `/users/${id}/orders`,
+  // 📅 Harvest Calendar (Future Implementation)
+  CALENDAR: {
+    BASE: '/harvest-calendar',
+    MONTHLY: (month, year) => `/harvest-calendar/${year}/${month}`,
+  },
+  
+  // 👤 User Profile (Protected)
+  USER: {
+    PROFILE: '/user/profile',
+    UPDATE: '/user/profile',
+    ADD_PHONE: '/user/phone',
   },
 };
 

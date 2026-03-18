@@ -1,393 +1,268 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { useProducts } from '../context/ProductContext';
-import { mockPreOrders, mockHeaderImages } from '../data/mockData'; // Import centralized mock data
-import ProductCard from '../components/product/ProductCard';
+import { usePreOrders } from '../hooks/usePreOrders';
+import PreOrderCard from '../components/preorder/PreOrderCard';
 import Button from '../components/ui/Button';
-import Loader, { SkeletonLoader } from '../components/ui/Loader';
-import { 
-  IoCalendarOutline, 
-  IoArrowForward,
-  IoFilter,
-  IoSearch,
-  IoLeaf
-} from 'react-icons/io5';
-import { FiChevronLeft, FiChevronRight } from 'react-icons/fi';
-import { GiPlantWatering, GiFruitTree, GiSunflower } from 'react-icons/gi';
+import { SkeletonLoader } from '../components/ui/Loader';
+import { IoArrowBack, IoLeaf } from 'react-icons/io5';
+import { FiPlay, FiPause } from 'react-icons/fi';
 import AOS from 'aos';
 import 'aos/dist/aos.css';
+import { headerImages, videoSources } from '../constants/homeConstants';
 
-// Header image - using centralized mock data
-const headerImage = mockHeaderImages.preorder || "https://images.unsplash.com/photo-1464226184884-fa280b87c399?auto=format&fit=crop&q=80&w=1600";
-
-// Gradient overlay for header images - same as home page
 const headerGradient = "bg-gradient-to-b from-transparent via-green-950/30 to-green-950";
 
 const PreOrders = () => {
-  const { newProducts, loading } = useProducts();
-  const [preOrderProducts, setPreOrderProducts] = useState([]);
-  const [filteredProducts, setFilteredProducts] = useState([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedMonth, setSelectedMonth] = useState('all');
-  const [sortBy, setSortBy] = useState('date');
-  const [showFilters, setShowFilters] = useState(false);
-  const [imageError, setImageError] = useState(false);
+  const [activeTab, setActiveTab] = useState('available');
+  const [videoPlaying, setVideoPlaying] = useState(false);
+  const [videoError, setVideoError] = useState(false);
+  const [videoLoaded, setVideoLoaded] = useState(false);
+  const videoRef = useRef(null);
   
-  const scrollRef = useRef(null);
+  const { 
+    availablePreorders, 
+    myPreorders, 
+    loading, 
+    error, 
+    fetchAvailablePreorders, 
+    fetchMyPreorders 
+  } = usePreOrders();
 
-  // Fallback images for header
-  const fallbackImages = [
-    mockHeaderImages.preorder,
-    mockHeaderImages.hero,
-    mockHeaderImages.categories,
-  ].filter(Boolean);
-
-  const [currentImage, setCurrentImage] = useState(headerImage);
-  const [fallbackIndex, setFallbackIndex] = useState(0);
-
-  const handleImageError = () => {
-    if (fallbackIndex < fallbackImages.length - 1) {
-      setFallbackIndex(prev => prev + 1);
-      setCurrentImage(fallbackImages[fallbackIndex + 1]);
-    } else {
-      setImageError(true);
-    }
-  };
-
-  useEffect(() => {
-    // Use centralized mock data for pre-orders
-    let preOrders = [];
-    
-    if (newProducts && newProducts.length > 0) {
-      // Filter from API data if available
-      preOrders = newProducts.filter(p => p.isPreorder);
-    }
-    
-    // If no pre-orders from API, use centralized mock data
-    if (preOrders.length === 0) {
-      // Map mockPreOrders to match ProductCard expected structure
-      preOrders = mockPreOrders.map(item => ({
-        id: item.id,
-        name: item.product.name,
-        description: item.product.description,
-        price: item.product.price,
-        unit: item.product.unit,
-        availableQuantity: item.availableQuantity,
-        totalQuantity: item.availableQuantity,
-        images: item.product.images,
-        category: item.product.category,
-        farmer: item.farmer,
-        harvestDate: item.expectedHarvestDate,
-        isOrganic: item.product.isOrganic,
-        isPreorder: true,
-        featured: false,
-        preOrderDeadline: item.orderDeadline,
-        estimatedDelivery: item.expectedHarvestDate,
-      }));
-    }
-    
-    setPreOrderProducts(preOrders);
-  }, [newProducts]);
-
-  useEffect(() => {
-    // Filter products based on search and month
-    let filtered = [...preOrderProducts];
-    
-    if (searchTerm) {
-      filtered = filtered.filter(p => 
-        p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.description?.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
-    
-    if (selectedMonth !== 'all') {
-      filtered = filtered.filter(p => {
-        const month = new Date(p.harvestDate).getMonth();
-        return month === parseInt(selectedMonth);
-      });
-    }
-    
-    // Sort products
-    filtered.sort((a, b) => {
-      if (sortBy === 'date') {
-        return new Date(a.harvestDate) - new Date(b.harvestDate);
-      } else if (sortBy === 'price-low') {
-        return a.price - b.price;
-      } else if (sortBy === 'price-high') {
-        return b.price - a.price;
-      }
-      return 0;
-    });
-    
-    setFilteredProducts(filtered);
-  }, [preOrderProducts, searchTerm, selectedMonth, sortBy]);
-
-  // Initialize AOS
+  // Initialize AOS with normal settings
   useEffect(() => {
     AOS.init({
-      duration: 1000,
-      once: false,
-      mirror: true,
-      offset: 50,
-      easing: 'ease-out-cubic',
+      duration: 800,
+      easing: 'ease',
+      once: true,
+      offset: 30,
     });
+    
+    // Refresh AOS after a short delay to ensure DOM is ready
+    setTimeout(() => {
+      AOS.refresh();
+    }, 100);
   }, []);
 
-  const scrollHorizontally = (direction) => {
-    if (scrollRef.current) {
-      const scrollAmount = direction === 'left' ? -400 : 400;
-      scrollRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+  // Refresh AOS when data loads
+  useEffect(() => {
+    if (!loading) {
+      AOS.refresh();
+    }
+  }, [loading, activeTab]);
+
+  useEffect(() => {
+    if (activeTab === 'available') {
+      fetchAvailablePreorders();
+    } else {
+      fetchMyPreorders();
+    }
+  }, [activeTab, fetchAvailablePreorders, fetchMyPreorders]);
+
+  // Video autoplay with intersection observer
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || videoError) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            video.play()
+              .then(() => {
+                setVideoPlaying(true);
+                setVideoLoaded(true);
+              })
+              .catch(() => {
+                setVideoPlaying(false);
+              });
+            observer.disconnect();
+          }
+        });
+      },
+      { threshold: 0.1, rootMargin: '200px' }
+    );
+
+    if (video) {
+      observer.observe(video);
+    }
+
+    return () => {
+      observer.disconnect();
+      if (video) {
+        video.pause();
+      }
+    };
+  }, [videoError]);
+
+  const toggleVideoPlay = () => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    if (video.paused) {
+      video.play()
+        .then(() => setVideoPlaying(true))
+        .catch(err => console.log("Video play failed:", err));
+    } else {
+      video.pause();
+      setVideoPlaying(false);
     }
   };
 
-  const months = [
-    { value: 'all', label: 'All Months' },
-    { value: '5', label: 'June' },
-    { value: '6', label: 'July' },
-    { value: '7', label: 'August' },
-    { value: '8', label: 'September' },
-    { value: '9', label: 'October' },
-    { value: '10', label: 'November' },
-    { value: '11', label: 'December' },
-  ];
-
-  // Calculate days until deadline
-  const getDaysUntilDeadline = (deadline) => {
-    const today = new Date();
-    const deadlineDate = new Date(deadline);
-    const diffTime = deadlineDate - today;
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays;
+  const handleVideoError = () => {
+    setVideoError(true);
+    setVideoPlaying(false);
   };
+
+  const displayPreorders = activeTab === 'available' ? availablePreorders : myPreorders;
 
   return (
     <div className="min-h-screen bg-green-950">
-      {/* Header Image Section - same style as home page */}
-      <div className="relative w-full h-96 overflow-hidden">
-        {!imageError ? (
-          <img 
-            src={currentImage}
-            alt="Pre-order harvests"
-            className="w-full h-full object-cover"
-            onError={handleImageError}
-          />
-        ) : (
-          <div className="w-full h-full bg-gradient-to-r from-green-800 to-green-900 flex items-center justify-center">
-            <h2 className="text-4xl md:text-5xl font-bold text-white text-center px-4">PRE-ORDER HARVESTS</h2>
+      {/* Video Header Section */}
+      <div className="relative w-full h-80 overflow-hidden">
+        {!videoError ? (
+          <div className="absolute inset-0">
+            <video
+              ref={videoRef}
+              muted
+              loop
+              playsInline
+              className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${
+                videoLoaded ? 'opacity-100' : 'opacity-0'
+              }`}
+              poster={headerImages.preorder}
+              onError={handleVideoError}
+              onLoadedData={() => setVideoLoaded(true)}
+            >
+              {videoSources.hero.map((src, index) => (
+                <source key={index} src={src} type="video/mp4" />
+              ))}
+            </video>
+            
+            {/* Show fallback image while video loads */}
+            {!videoLoaded && (
+              <img 
+                src={headerImages.preorder} 
+                alt="Pre-Orders" 
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+            )}
           </div>
+        ) : (
+          <img 
+            src={headerImages.preorder} 
+            alt="Pre-Orders" 
+            className="absolute inset-0 w-full h-full object-cover"
+          />
         )}
-        {/* Gradient overlay to blend into background - same as home page */}
+        
         <div className={`absolute inset-0 ${headerGradient}`}></div>
+
+        {/* Play/Pause Button */}
+        {!videoError && videoLoaded && (
+          <button
+            onClick={toggleVideoPlay}
+            className="absolute z-20 p-3 text-white transition-all border rounded-full bottom-6 right-6 bg-white/10 backdrop-blur-md hover:bg-white/20 border-white/20"
+            aria-label={videoPlaying ? 'Pause video' : 'Play video'}
+          >
+            {videoPlaying ? <FiPause className="w-4 h-4" /> : <FiPlay className="w-4 h-4" />}
+          </button>
+        )}
         
         {/* Header Content */}
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className="text-center text-white" data-aos="fade-down">
-            <h1 className="text-5xl md:text-6xl font-bold mb-4">PRE-ORDER HARVESTS</h1>
+          <div className="text-center text-white z-10" data-aos="fade-down">
+            <h1 className="text-5xl md:text-6xl font-bold mb-4">PRE-ORDERS</h1>
             <p className="text-xl text-green-200 max-w-2xl px-4">
-              Secure your share of upcoming harvests. Pre-order now and get the freshest produce directly from farmers.
+              Secure your harvest before it's ready
             </p>
           </div>
         </div>
       </div>
 
       <div className="container-custom py-12">
-        {/* Featured Pre-Orders Banner - same card style as home page */}
-        <div className="bg-green-900/30 backdrop-blur-sm rounded-3xl p-8 mb-12 border border-green-400/20" data-aos="fade-up">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="flex items-center gap-4">
-              <div className="w-16 h-16 bg-green-600/30 rounded-full flex items-center justify-center">
-                <GiFruitTree className="text-green-400 text-3xl" />
-              </div>
-              <div>
-                <h2 className="text-2xl font-bold text-white">Why Pre-Order?</h2>
-                <p className="text-green-200">Guaranteed supply, best prices, direct from farm</p>
-              </div>
-            </div>
-            <div className="flex gap-4">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-green-300">100%</div>
-                <div className="text-xs text-green-200/70">Fresh Guarantee</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-green-300">30+</div>
-                <div className="text-xs text-green-200/70">Farm Partners</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-green-300">15%</div>
-                <div className="text-xs text-green-200/70">Pre-Order Savings</div>
-              </div>
-            </div>
-          </div>
+        {/* Breadcrumb */}
+        <div className="mb-6" data-aos="fade-right">
+          <Link to="/" className="inline-flex items-center text-green-300 hover:text-green-100">
+            <IoArrowBack className="mr-2" />
+            Back to Home
+          </Link>
         </div>
 
-        {/* Search and Filter Bar - same style as home page */}
-        <div className="bg-green-900/30 backdrop-blur-sm rounded-3xl p-6 border border-green-400/20 mb-8" data-aos="fade-up">
-          <div className="flex flex-col md:flex-row gap-4">
-            {/* Search */}
-            <div className="flex-1 relative">
-              <input
-                type="text"
-                placeholder="Search pre-order items..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full px-4 py-3 pl-10 bg-green-950/50 border border-green-700/50 rounded-xl text-white placeholder-green-300/50 focus:ring-2 focus:ring-green-400 focus:border-transparent"
-              />
-              <IoSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-green-400" size={18} />
-            </div>
+        {/* Tabs */}
+        <div className="bg-green-900/30 backdrop-blur-sm rounded-3xl p-2 border border-green-400/20 mb-8 inline-flex" data-aos="fade-up">
+          <button
+            onClick={() => setActiveTab('available')}
+            className={`px-6 py-3 rounded-xl font-medium transition-all duration-300 ${
+              activeTab === 'available'
+                ? 'bg-green-600 text-white'
+                : 'text-green-300 hover:text-white hover:bg-green-800/30'
+            }`}
+          >
+            Available Pre-Orders
+          </button>
+          <button
+            onClick={() => setActiveTab('my')}
+            className={`px-6 py-3 rounded-xl font-medium transition-all duration-300 ${
+              activeTab === 'my'
+                ? 'bg-green-600 text-white'
+                : 'text-green-300 hover:text-white hover:bg-green-800/30'
+            }`}
+          >
+            My Pre-Orders
+          </button>
+        </div>
 
-            {/* Month Filter */}
-            <select
-              value={selectedMonth}
-              onChange={(e) => setSelectedMonth(e.target.value)}
-              className="px-4 py-3 bg-green-950/50 border border-green-700/50 rounded-xl text-white focus:ring-2 focus:ring-green-400 focus:border-transparent"
+        {/* Error State */}
+        {error && (
+          <div className="bg-red-900/30 backdrop-blur-sm rounded-3xl p-8 border border-red-400/20 text-center mb-8">
+            <p className="text-red-200 mb-4">{error}</p>
+            <button 
+              onClick={() => activeTab === 'available' ? fetchAvailablePreorders() : fetchMyPreorders()}
+              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
             >
-              {months.map(month => (
-                <option key={month.value} value={month.value} className="bg-green-900">
-                  {month.label}
-                </option>
-              ))}
-            </select>
-
-            {/* Sort By */}
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className="px-4 py-3 bg-green-950/50 border border-green-700/50 rounded-xl text-white focus:ring-2 focus:ring-green-400 focus:border-transparent"
-            >
-              <option value="date" className="bg-green-900">Sort by: Harvest Date</option>
-              <option value="price-low" className="bg-green-900">Sort by: Price (Low to High)</option>
-              <option value="price-high" className="bg-green-900">Sort by: Price (High to Low)</option>
-            </select>
-
-            {/* Filter Toggle (Mobile) */}
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className="md:hidden flex items-center justify-center gap-2 px-4 py-3 bg-green-950/50 border border-green-700/50 rounded-xl text-white"
-            >
-              <IoFilter />
-              <span>Filters</span>
+              Try Again
             </button>
           </div>
-        </div>
+        )}
 
-        {/* Products Grid */}
+        {/* Content */}
         {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <SkeletonLoader type="card" count={6} />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <SkeletonLoader type="card" count={8} />
           </div>
-        ) : filteredProducts.length === 0 ? (
-          <div className="text-center py-16 bg-green-900/30 backdrop-blur-sm rounded-3xl border border-green-400/20">
-            <GiPlantWatering className="text-green-400 text-6xl mx-auto mb-4" />
-            <h3 className="text-2xl font-bold text-white mb-2">No Pre-Orders Available</h3>
-            <p className="text-green-200 mb-6">Check back soon for upcoming harvests</p>
-            <Link to="/products">
-              <Button variant="primary" className="bg-green-600 hover:bg-green-700">
-                Browse Current Products
-                <IoArrowForward className="ml-2" />
-              </Button>
-            </Link>
+        ) : displayPreorders.length === 0 ? (
+          <div className="text-center py-16 bg-green-900/30 backdrop-blur-sm rounded-3xl p-12 border border-green-400/20" data-aos="fade-up">
+            <IoLeaf className="text-green-400 text-6xl mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-white mb-2">
+              {activeTab === 'available' ? 'No Pre-Orders Available' : 'No Pre-Orders Yet'}
+            </h2>
+            <p className="text-green-200 mb-6">
+              {activeTab === 'available' 
+                ? 'Check back later for new pre-order opportunities.' 
+                : 'Start pre-ordering to secure your harvest.'}
+            </p>
+            {activeTab === 'my' && (
+              <Link to="/preorders">
+                <Button variant="primary" className="bg-green-600 hover:bg-green-700 text-white">
+                  Browse Available Pre-Orders
+                </Button>
+              </Link>
+            )}
           </div>
         ) : (
           <>
-            {/* First 3 products in grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-              {filteredProducts.slice(0, 3).map((product, index) => {
-                const daysLeft = product.preOrderDeadline ? getDaysUntilDeadline(product.preOrderDeadline) : null;
-                
-                return (
-                  <div 
-                    key={product.id}
-                    data-aos="fade-up"
-                    data-aos-delay={index * 100}
-                    className="relative"
-                  >
-                    {daysLeft !== null && daysLeft <= 7 && daysLeft > 0 && (
-                      <div className="absolute -top-2 -right-2 z-10">
-                        <span className="bg-orange-500 text-white text-xs px-3 py-1 rounded-full shadow-lg">
-                          {daysLeft} days left!
-                        </span>
-                      </div>
-                    )}
-                    <ProductCard product={product} />
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Remaining products in horizontal scroll */}
-            {filteredProducts.length > 3 && (
-              <div className="relative mt-8">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-xl font-semibold text-white">More Pre-Order Items</h3>
-                  <div className="flex gap-2">
-                    <button 
-                      onClick={() => scrollHorizontally('left')}
-                      className="p-2 bg-green-800/80 backdrop-blur-md rounded-full hover:bg-green-700 transition-colors"
-                    >
-                      <FiChevronLeft className="w-5 h-5 text-white" />
-                    </button>
-                    <button 
-                      onClick={() => scrollHorizontally('right')}
-                      className="p-2 bg-green-800/80 backdrop-blur-md rounded-full hover:bg-green-700 transition-colors"
-                    >
-                      <FiChevronRight className="w-5 h-5 text-white" />
-                    </button>
-                  </div>
+            <p className="text-green-200 mb-6">
+              Showing <span className="text-white font-semibold">{displayPreorders.length}</span> pre-order{displayPreorders.length > 1 ? 's' : ''}
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {displayPreorders.map((preorder, index) => (
+                <div key={preorder.id} data-aos="fade-up" data-aos-delay={index * 100}>
+                  <PreOrderCard 
+                    preorder={preorder} 
+                    type={activeTab === 'available' ? 'available' : 'my'}
+                  />
                 </div>
-                <div 
-                  ref={scrollRef}
-                  className="flex gap-6 overflow-x-auto scrollbar-hide pb-4"
-                  style={{ scrollBehavior: 'smooth' }}
-                >
-                  {filteredProducts.slice(3).map((product, index) => {
-                    const daysLeft = product.preOrderDeadline ? getDaysUntilDeadline(product.preOrderDeadline) : null;
-                    
-                    return (
-                      <div 
-                        key={product.id}
-                        className="flex-shrink-0 w-72 relative"
-                      >
-                        {daysLeft !== null && daysLeft <= 7 && daysLeft > 0 && (
-                          <div className="absolute -top-2 -right-2 z-10">
-                            <span className="bg-orange-500 text-white text-xs px-3 py-1 rounded-full shadow-lg">
-                              {daysLeft} days left!
-                            </span>
-                          </div>
-                        )}
-                        <ProductCard product={product} />
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* How Pre-Order Works Section - same style as home page */}
-            <div className="mt-16 bg-green-900/30 backdrop-blur-sm rounded-3xl p-8 border border-green-400/20" data-aos="fade-up">
-              <h3 className="text-2xl font-bold text-white text-center mb-8">How Pre-Order Works</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="text-center">
-                  <div className="w-16 h-16 bg-green-600/30 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <span className="text-2xl font-bold text-green-400">1</span>
-                  </div>
-                  <h4 className="text-lg font-semibold text-white mb-2">Browse & Select</h4>
-                  <p className="text-green-200 text-sm">Choose from upcoming harvests and select your quantity</p>
-                </div>
-                <div className="text-center">
-                  <div className="w-16 h-16 bg-green-600/30 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <span className="text-2xl font-bold text-green-400">2</span>
-                  </div>
-                  <h4 className="text-lg font-semibold text-white mb-2">Secure Your Order</h4>
-                  <p className="text-green-200 text-sm">Pay a deposit to secure your share of the harvest</p>
-                </div>
-                <div className="text-center">
-                  <div className="w-16 h-16 bg-green-600/30 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <span className="text-2xl font-bold text-green-400">3</span>
-                  </div>
-                  <h4 className="text-lg font-semibold text-white mb-2">Receive Fresh Produce</h4>
-                  <p className="text-green-200 text-sm">Get your fresh produce delivered on harvest day</p>
-                </div>
-              </div>
+              ))}
             </div>
           </>
         )}

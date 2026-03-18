@@ -1,5 +1,4 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
-// Remove toast import
 
 const WishlistContext = createContext();
 
@@ -14,40 +13,53 @@ export const useWishlist = () => {
 export const WishlistProvider = ({ children }) => {
   const [wishlistItems, setWishlistItems] = useState([]);
 
+  // Load wishlist from localStorage on initial render
   useEffect(() => {
     const savedWishlist = localStorage.getItem('wishlist');
     if (savedWishlist) {
-      setWishlistItems(JSON.parse(savedWishlist));
+      try {
+        setWishlistItems(JSON.parse(savedWishlist));
+      } catch (error) {
+        console.error('Error loading wishlist from localStorage:', error);
+        localStorage.removeItem('wishlist');
+      }
     }
   }, []);
 
+  // Save wishlist to localStorage whenever it changes
   useEffect(() => {
     localStorage.setItem('wishlist', JSON.stringify(wishlistItems));
   }, [wishlistItems]);
 
-  const addToWishlist = (product) => {
+  const addToWishlist = (item) => {
     setWishlistItems(prevItems => {
-      const exists = prevItems.some(item => item.id === product.id);
+      const exists = prevItems.some(i => i.id === item.id);
       if (!exists) {
-        return [...prevItems, product];
+        return [...prevItems, item];
       }
       return prevItems;
     });
   };
 
-  const removeFromWishlist = (productId) => {
-    setWishlistItems(prevItems => prevItems.filter(item => item.id !== productId));
+  const removeFromWishlist = (itemId) => {
+    setWishlistItems(prevItems => prevItems.filter(item => item.id !== itemId));
   };
 
-  const isInWishlist = (productId) => {
-    return wishlistItems.some(item => item.id === productId);
+  const isInWishlist = (itemId) => {
+    return wishlistItems.some(item => item.id === itemId);
+  };
+
+  const clearWishlist = () => {
+    setWishlistItems([]);
   };
 
   const value = {
     wishlistItems,
+    wishlistCount: wishlistItems.length,
     addToWishlist,
     removeFromWishlist,
     isInWishlist,
+    clearWishlist,
   };
 
   return (

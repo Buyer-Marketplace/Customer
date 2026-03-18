@@ -2,12 +2,95 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="" />
+    
+    <!-- Optimized SVG favicon - smaller size, faster loading -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512' width='32' height='32'%3E%3Cpath fill='%234ade80' d='M272 96c-78.6 0-145.1 51.5-167.7 122.5c33.6-17 71.5-26.5 111.7-26.5h88c8.8 0 16 7.2 16 16s-7.2 16-16 16H288 216s0 0 0 0c-16.6 0-32.7 1.9-48.2 5.4c-25.9 5.9-44 29.1-44 56.6c0 31.8 21.6 58.5 48 64.6V384c0 35.3 28.7 64 64 64s64-28.7 64-64V320c70.7 0 128-57.3 128-128C416 116.1 347.9 48 272 96z'/%3E%3C/svg%3E" />
+    
+    <!-- Prefer modern image formats -->
+    <link rel="icon" type="image/png" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512' width='32' height='32'%3E%3Cpath fill='%234ade80' d='M272 96c-78.6 0-145.1 51.5-167.7 122.5c33.6-17 71.5-26.5 111.7-26.5h88c8.8 0 16 7.2 16 16s-7.2 16-16 16H288 216s0 0 0 0c-16.6 0-32.7 1.9-48.2 5.4c-25.9 5.9-44 29.1-44 56.6c0 31.8 21.6 58.5 48 64.6V384c0 35.3 28.7 64 64 64s64-28.7 64-64V320c70.7 0 128-57.3 128-128C416 116.1 347.9 48 272 96z'/%3E%3C/svg%3E" sizes="32x32" />
+    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512' width='180' height='180'%3E%3Cpath fill='%234ade80' d='M272 96c-78.6 0-145.1 51.5-167.7 122.5c33.6-17 71.5-26.5 111.7-26.5h88c8.8 0 16 7.2 16 16s-7.2 16-16 16H288 216s0 0 0 0c-16.6 0-32.7 1.9-48.2 5.4c-25.9 5.9-44 29.1-44 56.6c0 31.8 21.6 58.5 48 64.6V384c0 35.3 28.7 64 64 64s64-28.7 64-64V320c70.7 0 128-57.3 128-128C416 116.1 347.9 48 272 96z'/%3E%3C/svg%3E" sizes="180x180" />
+    
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>frontent</title>
+    <meta name="description" content="AgriTrace Market - Fresh from farm to your table. Connect with local farmers for organic produce." />
+    <meta name="keywords" content="farm, organic, fresh produce, vegetables, fruits, farmers market" />
+    <meta name="author" content="AgriTrace" />
+    <meta name="robots" content="index, follow" />
+    
+    <!-- Open Graph / Social Media -->
+    <meta property="og:title" content="AgriTrace Market" />
+    <meta property="og:description" content="Fresh from farm to your table" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://agritrace.com" />
+    <meta property="og:image" content="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 630'%3E%3Crect width='1200' height='630' fill='%23052e16'/%3E%3Ccircle cx='600' cy='315' r='150' fill='%234ade80' opacity='0.1'/%3E%3Cpath fill='%234ade80' transform='translate(440, 160) scale(2.5)' d='M272 96c-78.6 0-145.1 51.5-167.7 122.5c33.6-17 71.5-26.5 111.7-26.5h88c8.8 0 16 7.2 16 16s-7.2 16-16 16H288 216s0 0 0 0c-16.6 0-32.7 1.9-48.2 5.4c-25.9 5.9-44 29.1-44 56.6c0 31.8 21.6 58.5 48 64.6V384c0 35.3 28.7 64 64 64s64-28.7 64-64V320c70.7 0 128-57.3 128-128C416 116.1 347.9 48 272 96z'/%3E%3Ctext x='600' y='480' font-family='Arial' font-size='32' fill='white' text-anchor='middle'%3EAgriTrace Market%3C/text%3E%3C/svg%3E" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="AgriTrace Market" />
+    <meta name="twitter:description" content="Fresh from farm to your table" />
+    
+    <title>AgriTrace Market - Fresh from Farm</title>
+    
+    <!-- Preconnect to critical origins -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://images.unsplash.com" />
+    <link rel="preconnect" href="https://assets.mixkit.co" />
+    
+    <!-- DNS Prefetch -->
+    <link rel="dns-prefetch" href="https://images.unsplash.com" />
+    <link rel="dns-prefetch" href="https://images.pexels.com" />
+    <link rel="dns-prefetch" href="https://assets.mixkit.co" />
+    
+    <!-- Preload critical fonts -->
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" as="style" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" media="print" onload="this.media='all'" />
+    
+    <!-- Theme color for browser UI -->
+    <meta name="theme-color" content="#052e16" />
+    <meta name="msapplication-TileColor" content="#052e16" />
+    
+    <!-- Fallback for older browsers -->
+    <style>
+      /* Ensure content is visible during font loading */
+      .no-js body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      }
+      
+      /* Critical CSS for above-the-fold content */
+      .min-h-screen {
+        min-height: 100vh;
+      }
+      
+      .bg-green-950 {
+        background-color: #052e16;
+      }
+      
+      /* Hide fallback icon style */
+      link[rel="icon"] {
+        display: none;
+      }
+    </style>
+    
+    <!-- Script to detect JavaScript -->
+    <script>
+      document.documentElement.classList.remove('no-js');
+    </script>
   </head>
-  <body>
+  <body class="bg-green-950 font-sans antialiased no-js">
     <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
+    
+    <!-- Defer non-critical scripts -->
+    <script type="module" src="/src/main.jsx" defer></script>
+    
+    <!-- Optional: Service worker for offline support (uncomment when ready) -->
+    <!-- <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW registration failed:', err));
+        });
+      }
+    </script> -->
   </body>
 </html>

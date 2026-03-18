@@ -1,460 +1,424 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
+import { useHarvestCalendar } from '../hooks/useHarvestCalendar';
+import CalendarCard from '../components/calendar/CalendarCard';
+import MonthGrid from '../components/calendar/MonthGrid';
 import Button from '../components/ui/Button';
+import Loader, { SkeletonLoader } from '../components/ui/Loader';
 import { 
-  IoCalendarOutline, 
-  IoArrowForward,
-  IoTimeOutline,
-  IoCheckmarkCircle
+  IoArrowBack, 
+  IoLeaf,
+  IoChevronBack,
+  IoChevronForward,
+  IoCalendarOutline,
+  IoSunnyOutline
 } from 'react-icons/io5';
-import { GiPlantWatering, GiFruitTree, GiSunflower } from 'react-icons/gi';
+import { FiPlay, FiPause } from 'react-icons/fi';
 import AOS from 'aos';
 import 'aos/dist/aos.css';
+import { headerImages, videoSources } from '../constants/homeConstants';
 
-// USING THE SAME WORKING IMAGES FROM YOUR HOME PAGE
-const headerImage = "https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&q=80&w=1600"; // Same as hero fallback
-
-// EXACT SAME GRADIENT OVERLAY as Home page - this creates the smooth blend
 const headerGradient = "bg-gradient-to-b from-transparent via-green-950/30 to-green-950";
 
-const HarvestCalendar = () => {
-  // Get current date for default selection
-  const currentDate = new Date();
-  const [selectedMonth, setSelectedMonth] = useState(currentDate.getMonth());
-  const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear());
-  const [imageError, setImageError] = useState(false);
+const HarvestCalendarPage = () => {
+  const [view, setView] = useState('calendar'); // 'calendar' or 'list'
+  const [selectedHarvestDate, setSelectedHarvestDate] = useState(null);
   
-  // Fallback images array
-  const fallbackImages = [
-    "https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&q=80&w=1600",
-    "https://images.unsplash.com/photo-1464226184884-fa280b87c399?auto=format&fit=crop&q=80&w=1600",
-    "https://images.unsplash.com/photo-1523348837708-15d4a09cfac2?auto=format&fit=crop&q=80&w=1600"
-  ];
-
-  const [currentImage, setCurrentImage] = useState(headerImage);
-  const [fallbackIndex, setFallbackIndex] = useState(0);
-
-  const handleImageError = () => {
-    if (fallbackIndex < fallbackImages.length - 1) {
-      // Try next fallback image
-      setFallbackIndex(prev => prev + 1);
-      setCurrentImage(fallbackImages[fallbackIndex + 1]);
-    } else {
-      setImageError(true);
-    }
-  };
+  // Video states
+  const [videoPlaying, setVideoPlaying] = useState(false);
+  const [videoError, setVideoError] = useState(false);
+  const [videoLoaded, setVideoLoaded] = useState(false);
+  const [currentSourceIndex, setCurrentSourceIndex] = useState(0);
+  const videoRef = useRef(null);
+  const sectionRef = useRef(null);
   
-  // Initialize AOS
+  const { 
+    loading, 
+    error, 
+    selectedDate,
+    monthlyData,
+    getHarvestEventsForDate,
+    getUpcomingHarvests,
+    getHarvestSummary,
+    changeMonth,
+    setSelectedDate
+  } = useHarvestCalendar();
+
   useEffect(() => {
     AOS.init({
-      duration: 1000,
-      once: false,
-      mirror: true,
-      offset: 50,
-      easing: 'ease-out-cubic',
+      duration: 800,
+      once: true,
+      mirror: false,
+      offset: 20,
+      easing: 'ease-out',
     });
   }, []);
 
-  const months = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December'
-  ];
+  // Video handling with multiple source fallback
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || videoError) return;
 
-  // Generate years from current year to current year + 2
-  const currentYear = new Date().getFullYear();
-  const years = [currentYear, currentYear + 1, currentYear + 2];
+    const handleCanPlay = () => {
+      setVideoLoaded(true);
+      setVideoError(false);
+      
+      // Try to play
+      video.play()
+        .then(() => {
+          setVideoPlaying(true);
+        })
+        .catch((err) => {
+          console.log("Autoplay prevented:", err);
+          setVideoPlaying(false);
+        });
+    };
 
-  // Realistic harvest data for East African crops
-  const harvestData = {
-    [currentYear]: {
-      0: { // January
-        crops: [
-          { name: 'Kale (Sukuma Wiki)', status: 'in-season', farms: ['Green Valley', 'Highlands Farm', 'Nakuru Growers'] },
-          { name: 'Spinach', status: 'in-season', farms: ['Berry Fields', 'Green Valley', 'Kiambu Farmers'] },
-          { name: 'Carrots', status: 'in-season', farms: ['Highlands Farm', 'Meru Cooperative'] },
-          { name: 'Cabbage', status: 'ending-soon', farms: ['Green Valley', 'Narok Farms'] },
-          { name: 'Tomatoes', status: 'coming-soon', farms: ['Juja Greens', 'Kirinyaga Growers'] }
-        ]
-      },
-      1: { // February
-        crops: [
-          { name: 'Tomatoes', status: 'in-season', farms: ['Green Valley', 'Highlands Farm', 'Juja Greens'] },
-          { name: 'Peppers', status: 'in-season', farms: ['Berry Fields', 'Kiambu Farmers'] },
-          { name: 'Kale', status: 'in-season', farms: ['Green Valley', 'Highlands Farm', 'Nakuru Growers'] },
-          { name: 'Spinach', status: 'in-season', farms: ['Berry Fields', 'Kiambu Farmers'] },
-          { name: 'Onions', status: 'coming-soon', farms: ['Narok Farms', 'Meru Cooperative'] }
-        ]
-      },
-      2: { // March
-        crops: [
-          { name: 'Maize', status: 'coming-soon', farms: ['Highlands Farm', 'Trans-Nzoia Growers'] },
-          { name: 'Beans', status: 'coming-soon', farms: ['Green Valley', 'Machakos Farmers'] },
-          { name: 'Tomatoes', status: 'in-season', farms: ['Green Valley', 'Berry Fields', 'Kirinyaga Growers'] },
-          { name: 'Peppers', status: 'in-season', farms: ['Berry Fields', 'Kiambu Farmers'] },
-          { name: 'French Beans', status: 'in-season', farms: ['Nakuru Growers', 'Meru Cooperative'] }
-        ]
-      },
-      3: { // April
-        crops: [
-          { name: 'Strawberries', status: 'in-season', farms: ['Berry Fields', 'Kinangop Berries'] },
-          { name: 'Maize', status: 'in-season', farms: ['Highlands Farm', 'Trans-Nzoia Growers'] },
-          { name: 'Beans', status: 'in-season', farms: ['Green Valley', 'Machakos Farmers'] },
-          { name: 'Peas', status: 'coming-soon', farms: ['Highlands Farm', 'Nakuru Growers'] },
-          { name: 'Snow Peas', status: 'in-season', farms: ['Meru Cooperative', 'Timau Farms'] }
-        ]
-      },
-      4: { // May
-        crops: [
-          { name: 'Potatoes', status: 'in-season', farms: ['Highlands Farm', 'Molo Growers', 'Timau Farms'] },
-          { name: 'Strawberries', status: 'ending-soon', farms: ['Berry Fields', 'Kinangop Berries'] },
-          { name: 'Peas', status: 'in-season', farms: ['Highlands Farm', 'Nakuru Growers'] },
-          { name: 'Onions', status: 'in-season', farms: ['Green Valley', 'Narok Farms'] },
-          { name: 'Garlic', status: 'coming-soon', farms: ['Meru Cooperative', 'Embu Farmers'] }
-        ]
-      },
-      5: { // June
-        crops: [
-          { name: 'Avocados', status: 'coming-soon', farms: ['Green Valley', 'Muranga Farmers', 'Kisii Growers'] },
-          { name: 'Potatoes', status: 'in-season', farms: ['Highlands Farm', 'Molo Growers'] },
-          { name: 'Onions', status: 'in-season', farms: ['Green Valley', 'Narok Farms'] },
-          { name: 'Garlic', status: 'coming-soon', farms: ['Highlands Farm', 'Meru Cooperative'] },
-          { name: 'Ginger', status: 'coming-soon', farms: ['Embu Farmers', 'Kisii Growers'] }
-        ]
-      },
-      6: { // July
-        crops: [
-          { name: 'Avocados', status: 'in-season', farms: ['Green Valley', 'Muranga Farmers', 'Kisii Growers'] },
-          { name: 'Oranges', status: 'coming-soon', farms: ['Berry Fields', 'Makueni Farmers'] },
-          { name: 'Garlic', status: 'in-season', farms: ['Highlands Farm', 'Meru Cooperative'] },
-          { name: 'Ginger', status: 'in-season', farms: ['Embu Farmers', 'Kisii Growers'] },
-          { name: 'Passion Fruit', status: 'in-season', farms: ['Kiambu Farmers', 'Kakamega Growers'] }
-        ]
-      },
-      7: { // August
-        crops: [
-          { name: 'Oranges', status: 'in-season', farms: ['Berry Fields', 'Makueni Farmers', 'Voi Growers'] },
-          { name: 'Avocados', status: 'ending-soon', farms: ['Green Valley', 'Muranga Farmers'] },
-          { name: 'Apples', status: 'coming-soon', farms: ['Highlands Farm', 'Timau Farms'] },
-          { name: 'Pears', status: 'coming-soon', farms: ['Highlands Farm', 'Timau Farms'] },
-          { name: 'Mangoes', status: 'coming-soon', farms: ['Makueni Farmers', 'Voi Growers'] }
-        ]
-      },
-      8: { // September
-        crops: [
-          { name: 'Apples', status: 'in-season', farms: ['Highlands Farm', 'Timau Farms'] },
-          { name: 'Pears', status: 'in-season', farms: ['Highlands Farm', 'Timau Farms'] },
-          { name: 'Oranges', status: 'ending-soon', farms: ['Berry Fields', 'Makueni Farmers'] },
-          { name: 'Grapes', status: 'coming-soon', farms: ['Green Valley', 'Machakos Farmers'] },
-          { name: 'Mangoes', status: 'in-season', farms: ['Makueni Farmers', 'Voi Growers'] }
-        ]
-      },
-      9: { // October
-        crops: [
-          { name: 'Grapes', status: 'in-season', farms: ['Green Valley', 'Machakos Farmers'] },
-          { name: 'Pumpkins', status: 'in-season', farms: ['Highlands Farm', 'Kitui Growers'] },
-          { name: 'Apples', status: 'ending-soon', farms: ['Highlands Farm', 'Timau Farms'] },
-          { name: 'Squash', status: 'coming-soon', farms: ['Green Valley', 'Kitui Growers'] },
-          { name: 'Sweet Potatoes', status: 'coming-soon', farms: ['Kakamega Growers', 'Migori Farms'] }
-        ]
-      },
-      10: { // November
-        crops: [
-          { name: 'Pumpkins', status: 'ending-soon', farms: ['Highlands Farm', 'Kitui Growers'] },
-          { name: 'Squash', status: 'in-season', farms: ['Green Valley', 'Kitui Growers'] },
-          { name: 'Sweet Potatoes', status: 'in-season', farms: ['Kakamega Growers', 'Migori Farms'] },
-          { name: 'Citrus', status: 'coming-soon', farms: ['Berry Fields', 'Makueni Farmers'] },
-          { name: 'Pineapples', status: 'in-season', farms: ['Kiambu Farmers', 'Thika Growers'] }
-        ]
-      },
-      11: { // December
-        crops: [
-          { name: 'Citrus', status: 'in-season', farms: ['Berry Fields', 'Makueni Farmers', 'Voi Growers'] },
-          { name: 'Sweet Potatoes', status: 'ending-soon', farms: ['Highlands Farm', 'Kakamega Growers'] },
-          { name: 'Kale', status: 'in-season', farms: ['Green Valley', 'Nakuru Growers'] },
-          { name: 'Spinach', status: 'in-season', farms: ['Green Valley', 'Kiambu Farmers'] },
-          { name: 'Mangoes', status: 'in-season', farms: ['Makueni Farmers', 'Voi Growers'] }
-        ]
+    const handleError = () => {
+      // Try next source if available
+      if (currentSourceIndex < videoSources.crops.length - 1) {
+        setCurrentSourceIndex(prev => prev + 1);
+        setVideoLoaded(false);
+      } else {
+        setVideoError(true);
+        setVideoPlaying(false);
+        console.log("All video sources failed");
       }
+    };
+
+    video.addEventListener('canplay', handleCanPlay);
+    video.addEventListener('error', handleError);
+    
+    // Load the video
+    video.load();
+
+    return () => {
+      video.removeEventListener('canplay', handleCanPlay);
+      video.removeEventListener('error', handleError);
+      video.pause();
+    };
+  }, [currentSourceIndex, videoError]);
+
+  // Intersection Observer for lazy loading
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || videoError) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            // Start loading video when visible
+            setCurrentSourceIndex(0);
+            observer.disconnect();
+          }
+        });
+      },
+      { threshold: 0.1, rootMargin: '200px' }
+    );
+
+    if (sectionRef.current) {
+      observer.observe(sectionRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, [videoError]);
+
+  const handleDateClick = (date) => {
+    setSelectedHarvestDate(date);
+    setView('list');
+  };
+
+  const handleMonthChange = (direction) => {
+    changeMonth(direction);
+    setSelectedHarvestDate(null);
+  };
+
+  const toggleVideoPlay = () => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    if (video.paused) {
+      video.play()
+        .then(() => setVideoPlaying(true))
+        .catch(err => console.log("Video play failed:", err));
+    } else {
+      video.pause();
+      setVideoPlaying(false);
     }
   };
 
-  const currentData = harvestData[selectedYear]?.[selectedMonth] || { crops: [] };
-
-  const getStatusColor = (status) => {
-    switch(status) {
-      case 'in-season':
-        return 'text-green-400 bg-green-800/30';
-      case 'coming-soon':
-        return 'text-yellow-400 bg-yellow-800/30';
-      case 'ending-soon':
-        return 'text-orange-400 bg-orange-800/30';
-      default:
-        return 'text-green-300 bg-green-800/20';
-    }
+  const handleVideoError = () => {
+    setVideoError(true);
+    setVideoPlaying(false);
   };
 
-  const getStatusText = (status) => {
-    switch(status) {
-      case 'in-season':
-        return 'In Season';
-      case 'coming-soon':
-        return 'Coming Soon';
-      case 'ending-soon':
-        return 'Ending Soon';
-      default:
-        return status;
-    }
-  };
+  const summary = getHarvestSummary();
+  const upcomingHarvests = getUpcomingHarvests(30);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-green-950 flex items-center justify-center">
+        <Loader size="lg" showLogo={true} text="Loading harvest calendar..." withSpinner={true} />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-green-950">
-      {/* HEADER IMAGE SECTION - EXACT SAME STYLE AS HOME PAGE */}
-      <div className="relative w-full h-96 overflow-hidden">
-        {!imageError ? (
-          <img 
-            src={currentImage}
-            alt="Harvest Calendar Banner"
-            className="w-full h-full object-cover"
-            onError={handleImageError}
-          />
-        ) : (
-          <div className="w-full h-full bg-gradient-to-r from-green-800 to-green-900 flex items-center justify-center">
-            <h2 className="text-4xl md:text-5xl font-bold text-white text-center px-4">HARVEST CALENDAR</h2>
+      {/* Video Header Section - Optimized for fast loading */}
+      <div ref={sectionRef} className="relative w-full h-48 sm:h-64 md:h-80 overflow-hidden">
+        {!videoError ? (
+          <div className="absolute inset-0">
+            {/* Show poster immediately while video loads */}
+            <img 
+              src={headerImages.crops} 
+              alt="Harvest Calendar" 
+              className="absolute inset-0 w-full h-full object-cover"
+              loading="eager"
+            />
+            
+            <video
+              ref={videoRef}
+              muted
+              loop
+              playsInline
+              className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${
+                videoLoaded ? 'opacity-100' : 'opacity-0'
+              }`}
+              poster={headerImages.crops}
+              onError={handleVideoError}
+              preload="metadata"
+            >
+              <source 
+                src={videoSources.crops[currentSourceIndex]} 
+                type="video/mp4" 
+              />
+            </video>
           </div>
+        ) : (
+          <img 
+            src={headerImages.crops} 
+            alt="Harvest Calendar" 
+            className="absolute inset-0 w-full h-full object-cover"
+            loading="eager"
+          />
         )}
-        {/* SAME GRADIENT OVERLAY as Home page sections - creates smooth blend */}
-        <div className={`absolute inset-0 ${headerGradient}`}></div>
         
-        {/* Header Content - centered like home page */}
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="text-center text-white" data-aos="fade-down">
-            <h1 className="text-5xl md:text-6xl font-bold mb-4">HARVEST CALENDAR</h1>
-            <p className="text-xl text-green-200 max-w-2xl px-4">
-              Plan your purchases with our seasonal harvest guide. Know what's in season and when.
+        <div className={`absolute inset-0 ${headerGradient}`}></div>
+
+        {/* Play/Pause Button - only show when video is loaded */}
+        {!videoError && videoLoaded && (
+          <button
+            onClick={toggleVideoPlay}
+            className="absolute z-20 p-2 sm:p-3 text-white transition-all border rounded-full bottom-3 sm:bottom-4 right-3 sm:right-4 bg-white/10 backdrop-blur-md hover:bg-white/20 border-white/20"
+            aria-label={videoPlaying ? 'Pause video' : 'Play video'}
+          >
+            {videoPlaying ? <FiPause className="w-3 h-3 sm:w-4 sm:h-4" /> : <FiPlay className="w-3 h-3 sm:w-4 sm:h-4" />}
+          </button>
+        )}
+        
+        {/* Header Content - Responsive text sizing */}
+        <div className="absolute inset-0 flex items-center justify-center px-4">
+          <div className="text-center text-white z-10" data-aos="fade-down">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold mb-1 sm:mb-2 md:mb-3 lg:mb-4">
+              HARVEST CALENDAR
+            </h1>
+            <p className="text-sm sm:text-base md:text-lg lg:text-xl text-green-200 max-w-2xl px-4">
+              Plan your purchases with our seasonal harvest guide
             </p>
           </div>
         </div>
       </div>
 
-      <div className="container-custom py-12">
-        {/* Month/Year Selector - styled like home page cards */}
-        <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-8" data-aos="fade-up">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-green-600/30 rounded-full flex items-center justify-center">
-              <IoCalendarOutline className="text-green-400 text-2xl" />
-            </div>
-            <h2 className="text-2xl font-bold text-white">Seasonal Harvest Guide</h2>
-          </div>
-          
-          <div className="flex gap-4">
-            <select
-              value={selectedMonth}
-              onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
-              className="px-4 py-2 bg-green-900/50 border border-green-700/50 rounded-xl text-white focus:ring-2 focus:ring-green-400"
-            >
-              {months.map((month, index) => (
-                <option key={month} value={index} className="bg-green-900">
-                  {month}
-                </option>
-              ))}
-            </select>
-            
-            <select
-              value={selectedYear}
-              onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-              className="px-4 py-2 bg-green-900/50 border border-green-700/50 rounded-xl text-white focus:ring-2 focus:ring-green-400"
-            >
-              {years.map(year => (
-                <option key={year} value={year} className="bg-green-900">
-                  {year}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        {/* Month Overview Cards - same style as home page feature cards */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
-          {/* Current Month Highlight - same bg as home page cards */}
-          <div className="lg:col-span-1" data-aos="fade-right">
-            <div className="bg-green-900/30 backdrop-blur-sm rounded-3xl p-6 border border-green-400/20 h-full">
-              <div className="flex items-center gap-3 mb-4">
-                <GiSunflower className="text-green-400 text-3xl" />
-                <h3 className="text-xl font-semibold text-white">{months[selectedMonth]} Highlights</h3>
-              </div>
-              <div className="space-y-4">
-                <div className="flex justify-between items-center p-3 bg-green-800/20 rounded-lg">
-                  <span className="text-green-200">Peak Season</span>
-                  <span className="text-green-400 font-bold">
-                    {currentData.crops.filter(c => c.status === 'in-season').length} crops
-                  </span>
-                </div>
-                <div className="flex justify-between items-center p-3 bg-yellow-800/20 rounded-lg">
-                  <span className="text-green-200">Coming Soon</span>
-                  <span className="text-yellow-400 font-bold">
-                    {currentData.crops.filter(c => c.status === 'coming-soon').length} crops
-                  </span>
-                </div>
-                <div className="flex justify-between items-center p-3 bg-orange-800/20 rounded-lg">
-                  <span className="text-green-200">Ending Soon</span>
-                  <span className="text-orange-400 font-bold">
-                    {currentData.crops.filter(c => c.status === 'ending-soon').length} crops
-                  </span>
-                </div>
-              </div>
-
-              {/* Season Tip - styled like home page */}
-              <div className="mt-6 p-3 bg-green-800/20 rounded-lg border border-green-500/30">
-                <p className="text-sm text-green-300">
-                  <span className="font-bold text-green-400">Tip:</span>{' '}
-                  {selectedMonth === 2 || selectedMonth === 3 ? 'March-April is peak planting season for maize and beans.' :
-                   selectedMonth === 5 || selectedMonth === 6 ? 'June-July is perfect for avocado pre-orders.' :
-                   selectedMonth === 8 || selectedMonth === 9 ? 'September-October brings fresh apples and pears.' :
-                   'Check individual crop listings for harvest details.'}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Monthly Calendar - same bg as home page cards */}
-          <div className="lg:col-span-2" data-aos="fade-left">
-            <div className="bg-green-900/30 backdrop-blur-sm rounded-3xl p-6 border border-green-400/20">
-              <h3 className="text-xl font-semibold text-white mb-4">{months[selectedMonth]} {selectedYear}</h3>
-              <div className="grid grid-cols-7 gap-1 mb-2">
-                {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => (
-                  <div key={day} className="text-center text-green-300 text-sm py-2">{day}</div>
-                ))}
-              </div>
-              <div className="grid grid-cols-7 gap-1">
-                {[...Array(31)].map((_, i) => {
-                  const day = i + 1;
-                  // More realistic harvest days - every 3-4 days
-                  const hasHarvest = day % 3 === 0 || day % 4 === 0;
-                  // Peak harvest days - middle of month
-                  const isPeakHarvest = day >= 10 && day <= 20 && hasHarvest;
-                  return (
-                    <div 
-                      key={i} 
-                      className={`text-center p-2 rounded-lg ${
-                        isPeakHarvest 
-                          ? 'bg-green-500/40 text-green-200 border border-green-400/50' 
-                          : hasHarvest 
-                            ? 'bg-green-600/20 text-green-300 border border-green-500/20' 
-                            : 'text-green-200/30'
-                      }`}
-                    >
-                      <span className="text-sm">{day}</span>
-                      {hasHarvest && (
-                        <div className={`w-1.5 h-1.5 ${isPeakHarvest ? 'bg-green-300' : 'bg-green-500'} rounded-full mx-auto mt-1`}></div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-              <div className="flex justify-center gap-6 mt-4 text-xs">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 bg-green-500/40 border border-green-400/50 rounded"></div>
-                  <span className="text-green-300">Peak Harvest</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 bg-green-600/20 border border-green-500/20 rounded"></div>
-                  <span className="text-green-300">Regular Harvest</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Crops List - same bg as home page cards */}
-        <div className="bg-green-900/30 backdrop-blur-sm rounded-3xl p-8 border border-green-400/20 mb-12" data-aos="fade-up">
-          <h3 className="text-2xl font-bold text-white mb-6">Crops in {months[selectedMonth]} {selectedYear}</h3>
-          
-          {currentData.crops.length === 0 ? (
-            <p className="text-green-200 text-center py-8">No harvest data available for this month</p>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {currentData.crops.map((crop, index) => (
-                <div key={index} className="bg-white/5 backdrop-blur-sm p-4 rounded-xl border border-green-400/20 hover:bg-white/10 transition-all duration-300">
-                  <div className="flex justify-between items-start mb-2">
-                    <h4 className="text-lg font-semibold text-white">{crop.name}</h4>
-                    <span className={`text-xs px-3 py-1 rounded-full ${getStatusColor(crop.status)}`}>
-                      {getStatusText(crop.status)}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-green-200/70">
-                    <GiFruitTree className="text-green-400" />
-                    <span>Available from: {crop.farms.join(', ')}</span>
-                  </div>
-                  {crop.status === 'in-season' && (
-                    <div className="mt-2 flex items-center gap-1 text-xs text-green-400">
-                      <IoCheckmarkCircle />
-                      <span>Ready for harvest now</span>
-                    </div>
-                  )}
-                  {crop.status === 'coming-soon' && (
-                    <div className="mt-2 flex items-center gap-1 text-xs text-yellow-400">
-                      <IoTimeOutline />
-                      <span>Prepare to pre-order</span>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Yearly Overview - same bg as home page cards */}
-        <div className="bg-green-900/30 backdrop-blur-sm rounded-3xl p-8 border border-green-400/20" data-aos="fade-up">
-          <h3 className="text-2xl font-bold text-white mb-6">Year at a Glance</h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {months.map((month, index) => {
-              const monthData = harvestData[selectedYear]?.[index]?.crops || [];
-              const inSeasonCount = monthData.filter(c => c.status === 'in-season').length;
-              const comingSoonCount = monthData.filter(c => c.status === 'coming-soon').length;
-              const totalCrops = monthData.length;
-              
-              return (
-                <button
-                  key={month}
-                  onClick={() => setSelectedMonth(index)}
-                  className={`p-4 rounded-xl border transition-all duration-300 ${
-                    selectedMonth === index
-                      ? 'bg-green-600/30 border-green-400 shadow-lg shadow-green-900/30'
-                      : 'bg-white/5 border-green-400/20 hover:bg-green-800/30 hover:border-green-400/40'
-                  }`}
-                >
-                  <div className="text-sm font-semibold text-white mb-2">{month.substring(0, 3)}</div>
-                  <div className="flex justify-between items-center text-xs">
-                    <span className="text-green-400">{inSeasonCount} in season</span>
-                    {comingSoonCount > 0 && (
-                      <span className="text-yellow-400/70">{comingSoonCount} soon</span>
-                    )}
-                  </div>
-                  <div className="mt-2 w-full bg-green-800/30 rounded-full h-1">
-                    <div 
-                      className="bg-green-400 h-1 rounded-full" 
-                      style={{ width: `${(inSeasonCount / (totalCrops || 1)) * 100}%` }}
-                    ></div>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* CTA Button - same as home page */}
-        <div className="mt-12 text-center" data-aos="fade-up">
-          <p className="text-green-200 mb-4">Ready to start shopping based on the harvest calendar?</p>
-          <Link to="/preorders">
-            <Button variant="primary" size="lg" className="bg-green-600 hover:bg-green-700 text-white px-8 py-3">
-              BROWSE PRE-ORDERS
-              <IoArrowForward className="ml-2" />
-            </Button>
+      <div className="container-custom px-3 sm:px-4 md:px-6 py-8 sm:py-10 md:py-12">
+        {/* Breadcrumb */}
+        <div className="mb-4 sm:mb-5 md:mb-6" data-aos="fade-right">
+          <Link to="/" className="inline-flex items-center text-xs sm:text-sm md:text-base text-green-300 hover:text-green-100">
+            <IoArrowBack className="mr-1 sm:mr-2" size={14} />
+            Back to Home
           </Link>
         </div>
+
+        {/* Stats Cards - Responsive grid */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 md:gap-4 mb-6 sm:mb-7 md:mb-8" data-aos="fade-up">
+          <div className="bg-green-900/30 backdrop-blur-sm rounded-lg sm:rounded-xl p-2 sm:p-3 md:p-4 text-center border border-green-400/20">
+            <IoSunnyOutline className="text-green-400 text-base sm:text-lg md:text-xl lg:text-2xl mx-auto mb-1 sm:mb-2" />
+            <div className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-green-300">{summary.totalHarvests}</div>
+            <div className="text-[10px] sm:text-xs text-green-200/70">Total Harvests</div>
+          </div>
+          <div className="bg-green-900/30 backdrop-blur-sm rounded-lg sm:rounded-xl p-2 sm:p-3 md:p-4 text-center border border-green-400/20">
+            <IoCalendarOutline className="text-green-400 text-base sm:text-lg md:text-xl lg:text-2xl mx-auto mb-1 sm:mb-2" />
+            <div className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-green-300">{summary.upcomingHarvests}</div>
+            <div className="text-[10px] sm:text-xs text-green-200/70">Upcoming (30d)</div>
+          </div>
+          <div className="bg-green-900/30 backdrop-blur-sm rounded-lg sm:rounded-xl p-2 sm:p-3 md:p-4 text-center border border-green-400/20">
+            <IoLeaf className="text-green-400 text-base sm:text-lg md:text-xl lg:text-2xl mx-auto mb-1 sm:mb-2" />
+            <div className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-green-300">{summary.thisMonth}</div>
+            <div className="text-[10px] sm:text-xs text-green-200/70">This Month</div>
+          </div>
+          <div className="bg-green-900/30 backdrop-blur-sm rounded-lg sm:rounded-xl p-2 sm:p-3 md:p-4 text-center border border-green-400/20">
+            <div className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-green-300">
+              {selectedDate.toLocaleDateString('default', { month: 'short' })}
+            </div>
+            <div className="text-[10px] sm:text-xs text-green-200/70">Current Month</div>
+          </div>
+        </div>
+
+        {/* View Toggle - Responsive */}
+        <div className="bg-green-900/30 backdrop-blur-sm rounded-xl sm:rounded-2xl md:rounded-3xl p-1 sm:p-1.5 border border-green-400/20 mb-6 sm:mb-7 md:mb-8 inline-flex" data-aos="fade-up">
+          <button
+            onClick={() => setView('calendar')}
+            className={`px-3 sm:px-4 md:px-5 lg:px-6 py-2 sm:py-2.5 rounded-lg sm:rounded-xl text-xs sm:text-sm md:text-base font-medium transition-all duration-300 whitespace-nowrap ${
+              view === 'calendar'
+                ? 'bg-green-600 text-white'
+                : 'text-green-300 hover:text-white hover:bg-green-800/30'
+            }`}
+          >
+            Calendar
+          </button>
+          <button
+            onClick={() => setView('list')}
+            className={`px-3 sm:px-4 md:px-5 lg:px-6 py-2 sm:py-2.5 rounded-lg sm:rounded-xl text-xs sm:text-sm md:text-base font-medium transition-all duration-300 whitespace-nowrap ${
+              view === 'list'
+                ? 'bg-green-600 text-white'
+                : 'text-green-300 hover:text-white hover:bg-green-800/30'
+            }`}
+          >
+            List View
+          </button>
+        </div>
+
+        {/* Error State */}
+        {error && (
+          <div className="bg-red-900/30 backdrop-blur-sm rounded-xl sm:rounded-2xl md:rounded-3xl p-4 sm:p-6 md:p-8 border border-red-400/20 text-center mb-6 sm:mb-7 md:mb-8">
+            <p className="text-xs sm:text-sm md:text-base text-red-200 mb-3 sm:mb-4">{error}</p>
+            <button 
+              onClick={() => window.location.reload()}
+              className="px-3 sm:px-4 py-1.5 sm:py-2 bg-red-600 hover:bg-red-700 text-white text-xs sm:text-sm rounded-lg transition-colors"
+            >
+              Try Again
+            </button>
+          </div>
+        )}
+
+        {/* Main Content */}
+        {view === 'calendar' ? (
+          <>
+            {/* Month Navigation - Responsive */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-2 sm:gap-3 mb-4 sm:mb-5 md:mb-6" data-aos="fade-up">
+              <div className="flex w-full sm:w-auto gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => handleMonthChange(-1)}
+                  className="flex-1 sm:flex-initial border-2 border-green-400 text-green-300 hover:bg-green-800/30 text-xs sm:text-sm py-1.5 sm:py-2"
+                >
+                  <IoChevronBack className="mr-1 sm:mr-2" size={14} />
+                  <span className="hidden xs:inline">Previous</span>
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setSelectedDate(new Date())}
+                  className="flex-1 sm:flex-initial border-2 border-green-400 text-green-300 hover:bg-green-800/30 text-xs sm:text-sm py-1.5 sm:py-2"
+                >
+                  Today
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => handleMonthChange(1)}
+                  className="flex-1 sm:flex-initial border-2 border-green-400 text-green-300 hover:bg-green-800/30 text-xs sm:text-sm py-1.5 sm:py-2"
+                >
+                  <span className="hidden xs:inline">Next</span>
+                  <IoChevronForward className="ml-1 sm:ml-2" size={14} />
+                </Button>
+              </div>
+            </div>
+
+            {/* Calendar Grid - Responsive */}
+            <MonthGrid
+              selectedDate={selectedDate}
+              monthlyData={monthlyData}
+              onDateClick={handleDateClick}
+              getHarvestEventsForDate={getHarvestEventsForDate}
+            />
+          </>
+        ) : (
+          <>
+            {/* List View Header - Responsive */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4 sm:mb-5 md:mb-6" data-aos="fade-up">
+              <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-white">
+                {selectedHarvestDate 
+                  ? `Harvests on ${selectedHarvestDate.toLocaleDateString('en-US', { 
+                      month: 'short', 
+                      day: 'numeric' 
+                    })}`
+                  : 'Upcoming Harvests (30 days)'
+                }
+              </h2>
+              {selectedHarvestDate && (
+                <Button
+                  variant="outline"
+                  onClick={() => setSelectedHarvestDate(null)}
+                  className="border-2 border-green-400 text-green-300 hover:bg-green-800/30 text-xs sm:text-sm py-1.5 sm:py-2"
+                >
+                  View All
+                </Button>
+              )}
+            </div>
+
+            {/* Harvest List - Responsive */}
+            {loading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
+                <SkeletonLoader type="card" count={6} />
+              </div>
+            ) : selectedHarvestDate ? (
+              <div className="space-y-3 sm:space-y-4">
+                {getHarvestEventsForDate(selectedHarvestDate).length > 0 ? (
+                  getHarvestEventsForDate(selectedHarvestDate).map((harvest, index) => (
+                    <div key={index} data-aos="fade-up" data-aos-delay={index * 100}>
+                      <CalendarCard 
+                        harvest={[harvest]} 
+                        date={selectedHarvestDate}
+                      />
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-8 sm:py-10 md:py-12 bg-green-900/30 backdrop-blur-sm rounded-xl sm:rounded-2xl border border-green-400/20">
+                    <IoLeaf className="text-green-400 text-4xl sm:text-5xl md:text-6xl mx-auto mb-2 sm:mb-3" />
+                    <h3 className="text-base sm:text-lg md:text-xl font-bold text-white mb-1 sm:mb-2">No Harvests Scheduled</h3>
+                    <p className="text-xs sm:text-sm text-green-200">
+                      There are no harvests scheduled for this date.
+                    </p>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-3 sm:space-y-4">
+                {upcomingHarvests.length > 0 ? (
+                  upcomingHarvests.map((item, index) => (
+                    <div key={index} data-aos="fade-up" data-aos-delay={index * 100}>
+                      <CalendarCard 
+                        harvest={item.harvests} 
+                        date={item.date}
+                      />
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-8 sm:py-10 md:py-12 bg-green-900/30 backdrop-blur-sm rounded-xl sm:rounded-2xl border border-green-400/20">
+                    <IoLeaf className="text-green-400 text-4xl sm:text-5xl md:text-6xl mx-auto mb-2 sm:mb-3" />
+                    <h3 className="text-base sm:text-lg md:text-xl font-bold text-white mb-1 sm:mb-2">No Upcoming Harvests</h3>
+                    <p className="text-xs sm:text-sm text-green-200">
+                      There are no harvests scheduled in the next 30 days.
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+          </>
+        )}
       </div>
     </div>
   );
 };
 
-export default HarvestCalendar;
+export default HarvestCalendarPage;
