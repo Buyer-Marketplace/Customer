@@ -3,6 +3,8 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import GoogleButton from '../components/ui/GoogleButton';
 import { IoArrowBack, IoLeaf } from 'react-icons/io5';
+import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
+import { auth } from '../config/firebase';
 import AOS from 'aos';
 import 'aos/dist/aos.css';
 import { headerImages } from '../constants/homeConstants';
@@ -29,15 +31,19 @@ const SignUp = () => {
     setError('');
     
     try {
-      // Simulate getting user data from Google OAuth
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      const firebaseUser = result.user;
+
       const googleUserData = {
-        email: 'user@gmail.com', // This would come from Google
-        fullName: 'Google User', // This would come from Google
+        email: firebaseUser.email,
+        name: firebaseUser.displayName,
+        phone: firebaseUser.phoneNumber || ''
       };
       
-      const result = await googleLogin(googleUserData);
+      const loginResult = await googleLogin(googleUserData);
       
-      if (result.success) {
+      if (loginResult.success) {
         toast.success('Account created successfully!');
         navigate(from, { replace: true });
       } else {

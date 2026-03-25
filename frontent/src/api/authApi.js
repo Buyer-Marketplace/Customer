@@ -36,8 +36,8 @@ const authApi = {
         API_ENDPOINTS.AUTH.GOOGLE_OAUTH,
         {
           email: userData.email,
-          full_name: userData.fullName,
-          phone_number: userData.phoneNumber || '',
+          name: userData.name || userData.email.split('@')[0],
+          phone: userData.phone || '',
         }
       );
       

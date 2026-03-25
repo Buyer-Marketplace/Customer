@@ -6,12 +6,11 @@ import { formatCurrency } from '../../utils/formatCurrency';
 import { calculateStockStatus, getStockColor, getStockText } from '../../utils/calculateStock';
 import Button from '../ui/Button';
 import Badge from '../ui/Badge';
-import { IoHeart, IoHeartOutline, IoCartOutline } from 'react-icons/io5';
+import { IoHeart, IoHeartOutline } from 'react-icons/io5';
 import { GiFarmer } from 'react-icons/gi';
 import { FiMapPin } from 'react-icons/fi';
 
 const CropCard = ({ crop }) => {
-  const { addToCart } = useCart();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
   
   const stockStatus = calculateStockStatus(crop.availableQuantity, crop.totalQuantity || crop.availableQuantity);
@@ -27,15 +26,10 @@ const CropCard = ({ crop }) => {
     }
   };
 
-  const handleAddToCart = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    addToCart(crop, 1);
-  };
 
   return (
     <div className="bg-green-950/30 backdrop-blur-sm rounded-xl overflow-hidden border border-green-400/20 hover:border-green-400/40 transition-all duration-300 card-hover group shadow-xl">
-      <Link to={`/crops/${crop.id}`}>
+      <Link to={`/marketplace/item/${crop.id}`}>
         {/* Image Container */}
         <div className="relative h-48 overflow-hidden">
           {/* Image and Gradient together in same scaling container */}
@@ -128,18 +122,6 @@ const CropCard = ({ crop }) => {
             </p>
           )}
 
-          {/* Add to Cart Button */}
-          <Button
-            variant="primary"
-            size="sm"
-            fullWidth
-            onClick={handleAddToCart}
-            disabled={stockStatus === 'out-of-stock'}
-            className="bg-green-600 hover:bg-green-700 text-white border-none transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <IoCartOutline className="mr-2" size={18} />
-            {stockStatus === 'out-of-stock' ? 'Out of Stock' : 'Add to Cart'}
-          </Button>
         </div>
       </Link>
     </div>

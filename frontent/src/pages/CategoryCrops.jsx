@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { cropsApi } from '../api/cropsApi';
+import cropsApi from '../api/cropsApi';
 import { useCategories } from '../hooks/useCategories';
 import CropCard from '../components/crop/CropCard';
 import Loader, { SkeletonLoader } from '../components/ui/Loader';

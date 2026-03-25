@@ -47,8 +47,8 @@ const ordersApi = {
    * 
    * Body: {
    *   "marketplace_item_id": 10,
-   *   "quantity_ordered_kg": 50.00,
-   *   "payment_phone_number": "254712345678",
+   *   "quantity": 50.00,
+   *   "phone_number": "254712345678",
    *   "delivery_address": "123 Moi Avenue, Nairobi",
    *   "notes": "Please deliver in the morning."
    * }
@@ -67,8 +67,8 @@ const ordersApi = {
         API_ENDPOINTS.ORDERS.PLACE,
         {
           marketplace_item_id: orderData.marketplaceItemId,
-          quantity_ordered_kg: orderData.quantity,
-          payment_phone_number: orderData.phoneNumber,
+          quantity: orderData.quantity,
+          phone_number: orderData.phoneNumber,
           delivery_address: orderData.deliveryAddress,
           notes: orderData.notes || '',
         }

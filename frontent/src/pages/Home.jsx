@@ -3,11 +3,8 @@ import {
   HeroSection,
   TrustStats,
   FeaturedCrops,
-  PreorderSection,
   NewArrivals,
-  CategoriesSection,
   FeaturesSection,
-  HarvestCalendar,
   Testimonials
 } from '../components/home';
 import AOS from 'aos';
@@ -89,20 +86,7 @@ const Home = () => {
       {/* Featured Crops */}
       <FeaturedCrops />
       
-      {/* Pre-order Section */}
-      <PreorderSection />
-      
-      {/* New Arrivals */}
-      <NewArrivals />
-      
-      {/* Categories Section */}
-      <CategoriesSection />
-      
-      {/* Features Section */}
-      <FeaturesSection />
-      
-      {/* Harvest Calendar */}
-      <HarvestCalendar />
+
       
       {/* Testimonials */}
       <Testimonials />

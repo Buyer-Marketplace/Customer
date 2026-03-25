@@ -37,6 +37,20 @@ const marketplaceApi = {
       throw error;
     }
   },
+
+  /**
+   * Get all active marketplace items for the crop associated with the given item ID
+   * GET /api/marketplace/item/:id
+   */
+  getItemDetails: async (id) => {
+    try {
+      const response = await axiosInstance.get(`/marketplace/item/${id}`);
+      return response.data.data;
+    } catch (error) {
+      console.error(`Error fetching details for item ${id}:`, error);
+      throw error;
+    }
+  },
 };
 
 export default marketplaceApi;

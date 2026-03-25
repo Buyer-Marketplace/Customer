@@ -10,6 +10,7 @@ const Home = React.lazy(() => import('../pages/Home'));
 const Crops = React.lazy(() => import('../pages/Crops'));
 const CropDetails = React.lazy(() => import('../pages/CropDetails'));
 const Marketplace = React.lazy(() => import('../pages/Marketplace'));
+const MarketplaceItemDetails = React.lazy(() => import('../pages/MarketplaceItemDetails'));
 const Categories = React.lazy(() => import('../pages/Categories'));
 const CategoryCrops = React.lazy(() => import('../pages/CategoryCrops'));
 const Cart = React.lazy(() => import('../pages/Cart'));
@@ -95,6 +96,8 @@ const AppRoutes = () => {
           
           {/* Marketplace */}
           <Route path="/marketplace" element={<Marketplace />} />
+          <Route path="/marketplace/item/:id" element={<MarketplaceItemDetails />} />
+          <Route path="/listing/:id" element={<MarketplaceItemDetails />} />
           
           {/* Categories */}
           <Route path="/categories" element={<Categories />} />

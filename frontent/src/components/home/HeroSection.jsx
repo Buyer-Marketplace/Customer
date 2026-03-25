@@ -1,182 +1,26 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
-import { FiArrowRight, FiShield, FiTruck, FiSun, FiPlay, FiPause } from 'react-icons/fi';
+import { FiArrowRight, FiShield, FiTruck, FiSun } from 'react-icons/fi';
 import { IoLeaf } from 'react-icons/io5';
 import Typewriter from 'typewriter-effect';
 import Button from '../ui/Button';
-import { headerImages, typingPhrases, videoSources } from '../../constants/homeConstants';
+import { headerImages, typingPhrases } from '../../constants/homeConstants';
 
 const HeroSection = () => {
-  const [videoPlaying, setVideoPlaying] = useState(false);
-  const [videoError, setVideoError] = useState(false);
-  const [videoLoaded, setVideoLoaded] = useState(false);
-  const [useVideo, setUseVideo] = useState(true);
-  const videoRef = useRef(null);
-  const sectionRef = useRef(null);
-
-  // Check for data saver and mobile - disable video on slow connections
-  useEffect(() => {
-    const isDataSaver = navigator.connection?.saveData === true;
-    const isSlowConnection = navigator.connection?.effectiveType === '2g';
-    const isMobile = window.innerWidth < 768;
-    
-    // Don't use video on slow connections or data saver mode
-    if (isDataSaver || isSlowConnection || (isMobile && navigator.connection?.effectiveType === '3g')) {
-      setUseVideo(false);
-    }
-  }, []);
-
-  // Optimized video loading with Intersection Observer
-  useEffect(() => {
-    if (!useVideo || !videoRef.current) return;
-
-    const video = videoRef.current;
-    
-    // Preload just the first frame (poster is already set)
-    video.preload = 'metadata'; // Only load metadata initially
-    
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            // When section is visible, load the video
-            video.preload = 'auto';
-            
-            // Use the most reliable source first
-            const heroVideoSources = videoSources.hero;
-            
-            // Try the first source that's most likely to work
-            const primarySource = heroVideoSources.find(src => 
-              src.includes('storage.googleapis.com') || src.includes('gtv-videos')
-            ) || heroVideoSources[0];
-            
-            video.src = primarySource;
-            video.load();
-            
-            observer.disconnect();
-          }
-        });
-      },
-      { 
-        threshold: 0.1,
-        rootMargin: '200px' // Start loading when 200px from viewport
-      }
-    );
-
-    observer.observe(sectionRef.current);
-
-    return () => {
-      observer.disconnect();
-      if (video) {
-        video.pause();
-        video.src = '';
-        video.load();
-      }
-    };
-  }, [useVideo]);
-
-  // Handle video events
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video || !useVideo) return;
-
-    const handleCanPlay = () => {
-      setVideoLoaded(true);
-      // Try to play automatically
-      video.play()
-        .then(() => {
-          setVideoPlaying(true);
-          setVideoError(false);
-        })
-        .catch(err => {
-          console.log("AutoPlay prevented:", err);
-          setVideoPlaying(false);
-        });
-    };
-
-    const handleError = (e) => {
-      console.log("Video error, falling back to image");
-      setVideoError(true);
-      setUseVideo(false);
-    };
-
-    const handleLoadedData = () => {
-      setVideoLoaded(true);
-    };
-
-    video.addEventListener('canplay', handleCanPlay);
-    video.addEventListener('error', handleError);
-    video.addEventListener('loadeddata', handleLoadedData);
-
-    return () => {
-      video.removeEventListener('canplay', handleCanPlay);
-      video.removeEventListener('error', handleError);
-      video.removeEventListener('loadeddata', handleLoadedData);
-    };
-  }, [useVideo]);
-
-  const toggleVideoPlay = () => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    if (video.paused) {
-      video.play()
-        .then(() => setVideoPlaying(true))
-        .catch(err => console.log("Video play failed:", err));
-    } else {
-      video.pause();
-      setVideoPlaying(false);
-    }
-  };
 
   return (
-    <div ref={sectionRef} className="relative h-screen min-h-[800px] overflow-hidden">
-      {/* Background Video/Image */}
+    <div className="relative h-screen min-h-[800px] overflow-hidden">
+      {/* Background Image */}
       <div className="absolute inset-0">
-        {useVideo && !videoError ? (
-          <>
-            <video
-              ref={videoRef}
-              muted
-              loop
-              playsInline
-              className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${
-                videoLoaded ? 'opacity-100' : 'opacity-0'
-              }`}
-              poster={headerImages.hero}
-              preload="metadata" // Start with metadata only
-            />
-            {/* Show poster while video loads */}
-            {!videoLoaded && (
-              <img 
-                src={headerImages.hero} 
-                alt="Farm landscape" 
-                className="absolute inset-0 w-full h-full object-cover"
-              />
-            )}
-          </>
-        ) : (
-          <img 
-            src={headerImages.hero} 
-            alt="Farm landscape" 
-            className="absolute inset-0 w-full h-full object-cover"
-          />
-        )}
+        <img 
+          src={headerImages.hero} 
+          alt="Farm landscape" 
+          className="absolute inset-0 w-full h-full object-cover"
+        />
         
         {/* Gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-green-950 via-green-900/80 to-transparent"></div>
       </div>
-
-      {/* Play/Pause Button - only show when video is loaded and no error */}
-      {useVideo && !videoError && videoLoaded && (
-        <button
-          onClick={toggleVideoPlay}
-          className="absolute z-20 p-4 text-white transition-all border rounded-full top-6 right-6 bg-white/10 backdrop-blur-md hover:bg-white/20 border-white/20"
-          aria-label={videoPlaying ? 'Pause video' : 'Play video'}
-        >
-          {videoPlaying ? <FiPause className="w-5 h-5" /> : <FiPlay className="w-5 h-5" />}
-        </button>
-      )}
 
       {/* Content */}
       <div className="relative z-10 flex items-center h-full">
