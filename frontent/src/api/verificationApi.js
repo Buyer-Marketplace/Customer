@@ -3,10 +3,10 @@ import axiosInstance from './axios';
 /**
  * Phone Verification API Service
  * Handles phone verification for M-Pesa payments
- * Base URL: http://localhost:3000/api
+ * Base URL: http://localhost:3050/api
  * All endpoints are Protected - Require Authorization header
  */
-const verificationApi = {
+export const verificationApi = {
   /**
    * Send Phone Verification Code
    * POST /api/auth/send-phone-verification

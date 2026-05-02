@@ -20,6 +20,7 @@ const API_ENDPOINTS = {
   ORDERS: {
     PLACE: '/buyer/orders/place',    // POST - Place order with M-Pesa
     MY_ORDERS: '/buyer/orders',       // GET - User's order history
+    CONFIRM_DELIVERY: (orderId) => `/buyer/orders/${orderId}/confirm-delivery`, // POST - Escrow release
   },
   
   // 📦 Pre-Orders (Future Implementation)

@@ -4,9 +4,9 @@ import API_ENDPOINTS from '../config/apiEndpoints';
 /**
  * Marketplace API Service
  * Handles all marketplace-related API calls
- * Base URL: http://localhost:3000/api
+ * Base URL: http://localhost:3050/api
  */
-const marketplaceApi = {
+export const marketplaceApi = {
   /**
    * Get All Active Listings
    * GET /api/marketplace/active

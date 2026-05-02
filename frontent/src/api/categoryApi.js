@@ -123,3 +123,5 @@ export const categoryApi = {
     }
   },
 };
+
+export default categoryApi;

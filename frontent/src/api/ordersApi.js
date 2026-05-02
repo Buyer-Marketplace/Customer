@@ -4,10 +4,10 @@ import API_ENDPOINTS from '../config/apiEndpoints';
 /**
  * Orders API Service
  * Handles all order-related API calls
- * Base URL: http://localhost:3000/api
+ * Base URL: http://localhost:3050/api
  * All endpoints are Protected - Require Authorization header
  */
-const ordersApi = {
+export const ordersApi = {
   /**
    * Get My Orders
    * GET /api/buyer/orders
@@ -76,6 +76,20 @@ const ordersApi = {
       return response.data;
     } catch (error) {
       console.error('Error placing order:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Confirm Delivery (Release Escrow Funds)
+   * POST /api/buyer/orders/:id/confirm-delivery
+   */
+  confirmDelivery: async (orderId) => {
+    try {
+      const response = await axiosInstance.post(API_ENDPOINTS.ORDERS.CONFIRM_DELIVERY(orderId));
+      return response.data;
+    } catch (error) {
+      console.error('Error confirming delivery:', error);
       throw error;
     }
   },

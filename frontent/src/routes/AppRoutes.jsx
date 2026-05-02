@@ -128,9 +128,8 @@ const AppRoutes = () => {
             </ProtectedRoute>
           } />
           
-          {/* Checkout - requires phone number for M-Pesa */}
           <Route path="/checkout" element={
-            <ProtectedRoute requirePhone={true}>
+            <ProtectedRoute requirePhone={false}>
               <Checkout />
             </ProtectedRoute>
           } />

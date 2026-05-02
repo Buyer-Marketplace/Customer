@@ -4,9 +4,9 @@ import API_ENDPOINTS from '../config/apiEndpoints';
 /**
  * Authentication API Service
  * Handles all authentication-related API calls
- * Base URL: http://localhost:3000/api
+ * Base URL: http://localhost:3050/api
  */
-const authApi = {
+export const authApi = {
   /**
    * Google OAuth Login
    * POST /api/auth/google-oauth

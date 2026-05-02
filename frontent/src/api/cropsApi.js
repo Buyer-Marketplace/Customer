@@ -4,9 +4,9 @@ import API_ENDPOINTS from '../config/apiEndpoints';
 /**
  * Crops API Service
  * Handles all crop-related API calls
- * Base URL: http://localhost:3000/api
+ * Base URL: http://localhost:3050/api
  */
-const cropsApi = {
+export const cropsApi = {
   /**
    * Get All Active Crops
    * GET /api/buyer/crops

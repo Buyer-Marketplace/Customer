@@ -29,9 +29,9 @@ export default defineConfig({
     open: true,
     // REMOVED: hmr: { port: 3000 } - This was causing the 426 Upgrade error
     proxy: {
-      // This redirects http://localhost:5173/api to http://localhost:3000/api
+      // This redirects http://localhost:5173/api to http://localhost:3050/api
       '/api': {
-        target: 'http://localhost:3000',
+        target: 'http://localhost:3050',
         changeOrigin: true,
         secure: false,
       },

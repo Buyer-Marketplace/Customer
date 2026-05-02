@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import marketplaceApi from '../api/marketplaceApi';
 import { useCart } from '../context/CartContext';
+import { formatCurrency } from '../utils/formatCurrency';
 import Loader from '../components/ui/Loader';
 import Button from '../components/ui/Button';
 import Badge from '../components/ui/Badge';
@@ -216,7 +217,9 @@ const MarketplaceItemDetails = () => {
               <div className="mb-8">
                 <p className="text-green-300 font-medium mb-1">Price per kg</p>
                 <div className="flex items-end gap-2">
-                  <span className="text-5xl font-extrabold text-green-400 tracking-tight">KES {item.price_per_kg}</span>
+                  <span className="text-5xl font-extrabold text-green-400 tracking-tight">
+                    {formatCurrency(item.price_per_kg)}
+                  </span>
                 </div>
               </div>
 

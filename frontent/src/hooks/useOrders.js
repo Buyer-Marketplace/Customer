@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { ordersApi } from '../api/ordersApi';
+import ordersApi from '../api/ordersApi';
 import toast from 'react-hot-toast';
 
 export const useOrders = () => {
@@ -62,6 +62,22 @@ export const useOrders = () => {
     }
   }, [fetchMyOrders]);
 
+  const confirmDelivery = useCallback(async (id) => {
+    setLoading(true);
+    try {
+      await ordersApi.confirmDelivery(id);
+      toast.success('Delivery confirmed! Funds released to farmer.');
+      await fetchMyOrders();
+      return true;
+    } catch (err) {
+      const message = err.response?.data?.message || 'Failed to confirm delivery';
+      toast.error(message);
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  }, [fetchMyOrders]);
+
   const getOrderStatusColor = (status) => {
     switch (status?.toLowerCase()) {
       case 'pending':
@@ -96,6 +112,7 @@ export const useOrders = () => {
     fetchMyOrders,
     getOrderById,
     placeOrder,
+    confirmDelivery,
     getOrderStatusColor,
     getOrderStatusText,
   };

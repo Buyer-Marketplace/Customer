@@ -110,3 +110,5 @@ export const preorderApi = {
     }
   },
 };
+
+export default preorderApi;

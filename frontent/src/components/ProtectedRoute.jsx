@@ -82,17 +82,18 @@ const ProtectedRoute = ({
 
   // Check if phone number is required for certain actions (e.g., checkout)
   if (requirePhone && !user?.phone_number) {
-    return (
-      <Navigate 
-        to={redirectToProfile} 
-        state={{ 
-          from: location,
-          requirePhone: true,
-          message: 'Please add your phone number to continue with checkout'
-        }} 
-        replace 
-      />
-    );
+    // Phone verification requirement removed as per user request
+    // return (
+    //   <Navigate 
+    //     to={redirectToProfile} 
+    //     state={{ 
+    //       from: location,
+    //       requirePhone: true,
+    //       message: 'Please add your phone number to continue with checkout'
+    //     }} 
+    //     replace 
+    //   />
+    // );
   }
 
   // Authenticated and authorized - render the protected component

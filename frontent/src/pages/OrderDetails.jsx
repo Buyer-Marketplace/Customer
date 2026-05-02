@@ -28,7 +28,7 @@ const headerGradient = "bg-gradient-to-b from-transparent via-green-950/30 to-gr
 const OrderDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { getOrderById, getOrderStatusColor } = useOrders();
+  const { getOrderById, getOrderStatusColor, confirmDelivery } = useOrders();
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -346,6 +346,35 @@ const OrderDetails = () => {
               </div>
             </div>
           </div>
+          
+          {/* Escrow Release Action */}
+          {order.escrow_status === 'Paid' && (
+            <div className="bg-green-600/20 backdrop-blur-sm rounded-3xl p-6 border border-green-400/40 text-center" data-aos="zoom-in">
+              <IoCheckmarkCircle className="text-green-400 text-5xl mx-auto mb-3" />
+              <h3 className="text-xl font-bold text-white mb-2">Have you received your order?</h3>
+              <p className="text-green-100 mb-6 max-w-md mx-auto">
+                Once you confirm delivery, the funds held in escrow will be released directly to the farmer's M-Pesa.
+              </p>
+              <div className="flex flex-col sm:flex-row justify-center gap-4">
+                <Button 
+                  variant="primary" 
+                  className="bg-green-600 hover:bg-green-700 text-white px-8"
+                  onClick={async () => {
+                    const success = await confirmDelivery(order.id);
+                    if (success) fetchOrder();
+                  }}
+                  disabled={loading}
+                >
+                  {loading ? 'Processing...' : 'Confirm & Release Funds'}
+                </Button>
+                <Link to="/contact">
+                  <Button variant="outline" className="border-2 border-red-400 text-red-400 hover:bg-red-950/30">
+                    Report Issue
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          )}
 
           {/* Need Help? */}
           <div className="bg-green-800/30 backdrop-blur-sm rounded-3xl p-6 text-center border border-green-400/20" data-aos="fade-up">

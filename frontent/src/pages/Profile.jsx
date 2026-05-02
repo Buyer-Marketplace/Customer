@@ -299,24 +299,6 @@ const Profile = () => {
           </button>
         </div>
 
-        {/* Phone Number Required Warning */}
-        {requirePhone && !user?.phone_number && (
-          <div className="mb-4 sm:mb-5 md:mb-6 bg-yellow-600/20 border border-yellow-600/30 rounded-xl sm:rounded-2xl p-3 sm:p-4 flex items-center justify-between" data-aos="fade-up">
-            <div className="flex items-center gap-2 sm:gap-3">
-              <IoPhonePortraitOutline className="text-yellow-400 text-lg sm:text-xl" />
-              <p className="text-yellow-300 text-xs sm:text-sm">
-                Please verify your phone number for M-Pesa payments
-              </p>
-            </div>
-            <button
-              onClick={() => setShowPhoneModal(true)}
-              className="text-yellow-400 hover:text-yellow-300 text-xs sm:text-sm font-medium underline"
-            >
-              Verify Now
-            </button>
-          </div>
-        )}
-
         {/* Stats Cards - Responsive */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 md:gap-4 mb-6 sm:mb-7 md:mb-8" data-aos="fade-up">
           {stats.map((stat, index) => {

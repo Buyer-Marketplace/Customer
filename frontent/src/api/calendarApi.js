@@ -65,3 +65,5 @@ export const calendarApi = {
     }
   },
 };
+
+export default calendarApi;

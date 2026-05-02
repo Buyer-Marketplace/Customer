@@ -1,5 +1,7 @@
 export const formatCurrency = (amount, currency = 'KES') => {
-  if (typeof amount !== 'number') {
+  const numericAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
+  
+  if (isNaN(numericAmount) || numericAmount === null || numericAmount === undefined) {
     return `${currency} 0`;
   }
   
@@ -8,5 +10,5 @@ export const formatCurrency = (amount, currency = 'KES') => {
     currency: 'KES',
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
-  }).format(amount);
+  }).format(numericAmount);
 };

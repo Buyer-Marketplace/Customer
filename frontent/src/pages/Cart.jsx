@@ -35,12 +35,6 @@ const Cart = () => {
     if (!isAuthenticated) {
       navigate('/signin', { state: { from: '/checkout' } });
     } else {
-      // Validate phone number exists for M-Pesa
-      if (!user?.phone_number) {
-        toast.error('Please add a phone number to your profile for M-Pesa payments');
-        navigate('/profile', { state: { from: '/checkout', requirePhone: true } });
-        return;
-      }
       navigate('/checkout');
     }
   };

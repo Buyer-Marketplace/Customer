@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
-import { ordersApi } from '../api/ordersApi';
+import ordersApi from '../api/ordersApi';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import { formatCurrency } from '../utils/formatCurrency';
