@@ -19,6 +19,9 @@ const OrderDetails = React.lazy(() => import('../pages/OrderDetails'));
 const Wishlist = React.lazy(() => import('../pages/Wishlist'));
 const Profile = React.lazy(() => import('../pages/Profile'));
 const Contact = React.lazy(() => import('../pages/Contact'));
+const AboutUs = React.lazy(() => import('../pages/AboutUs'));
+const PrivacyPolicy = React.lazy(() => import('../pages/PrivacyPolicy'));
+const TermsOfService = React.lazy(() => import('../pages/TermsOfService'));
 
 // Pre-order pages
 const PreOrders = React.lazy(() => import('../pages/PreOrders'));
@@ -109,6 +112,15 @@ const AppRoutes = () => {
           
           {/* Contact - Public (local storage based) */}
           <Route path="/contact" element={<Contact />} /> 
+
+          {/* About Us */}
+          <Route path="/about" element={<AboutUs />} />
+
+          {/* Privacy Page */}
+          <Route path="/privacy" element={<PrivacyPolicy />} />
+
+          {/*TermsOfService */} 
+          <Route path="/terms" element={<TermsOfService />} />
 
           {/* Pre-Orders */}
           <Route path="/preorders" element={<PreOrders />} />
