@@ -3,10 +3,11 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import marketplaceApi from '../api/marketplaceApi';
 import { useCart } from '../context/CartContext';
 import { formatCurrency } from '../utils/formatCurrency';
+import { formatDate } from '../utils/formatDate';
 import Loader from '../components/ui/Loader';
 import Button from '../components/ui/Button';
 import Badge from '../components/ui/Badge';
-import { IoArrowBack, IoLeaf } from 'react-icons/io5';
+import { IoArrowBack, IoLeaf, IoCalendarOutline } from 'react-icons/io5';
 import { GiFarmer } from 'react-icons/gi';
 import { FiMapPin, FiClock } from 'react-icons/fi';
 import toast from 'react-hot-toast';
@@ -107,10 +108,19 @@ const MarketplaceItemDetails = () => {
     );
   }
 
+  const isStockAvailable = item.listing_status === 'Active' && item.available_quantity_kg > 0;
   const harvestDate = new Date(item.expected_harvest_date);
   const today = new Date();
+  
+  // Normalize dates to remove time for accurate comparison
+  const todayNormalized = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const harvestNormalized = new Date(harvestDate.getFullYear(), harvestDate.getMonth(), harvestDate.getDate());
+  
+  const isHarvested = harvestNormalized <= todayNormalized;
+  const isAvailableNow = isStockAvailable && isHarvested;
+  const isPreOrder = isStockAvailable && !isHarvested;
+  
   const daysToHarvest = Math.ceil((harvestDate - today) / (1000 * 60 * 60 * 24));
-  const isAvailable = item.listing_status === 'Active' && item.available_quantity_kg > 0;
 
   return (
     <div className="min-h-screen bg-green-950 pb-20">
@@ -133,8 +143,11 @@ const MarketplaceItemDetails = () => {
             
             <div data-aos="fade-up">
               <div className="flex items-center gap-3 mb-3">
-                <Badge variant={isAvailable ? 'success' : 'default'} className="backdrop-blur-md">
-                  {isAvailable ? 'Available Now' : 'Out of Stock'}
+                <Badge 
+                  variant={isAvailableNow ? 'success' : isPreOrder ? 'info' : 'default'} 
+                  className={`backdrop-blur-md ${isPreOrder ? 'bg-blue-600/80' : ''}`}
+                >
+                  {isAvailableNow ? 'Available Now' : isPreOrder ? 'Booking Open' : 'Out of Stock'}
                 </Badge>
                 {item.is_organic && (
                   <Badge variant="success" className="bg-green-600/80 backdrop-blur-md">
@@ -172,17 +185,17 @@ const MarketplaceItemDetails = () => {
                 </div>
                 
                 <div className="flex flex-col gap-4">
-                  <div className="bg-green-950/50 rounded-xl p-4 border border-green-800/30">
-                    <div className="flex items-center gap-3 text-green-200 mb-1">
-                      <FiClock className="text-green-400 text-xl" />
-                      <span className="font-medium">Expected Harvest</span>
+                  <div className={`rounded-xl p-4 border ${isPreOrder ? 'bg-blue-900/30 border-blue-400/20' : 'bg-green-950/50 border-green-800/30'}`}>
+                    <div className={`flex items-center gap-3 mb-1 ${isPreOrder ? 'text-blue-200' : 'text-green-200'}`}>
+                      <FiClock className={`${isPreOrder ? 'text-blue-400' : 'text-green-400'} text-xl`} />
+                      <span className="font-medium">{isPreOrder ? 'Expected Harvest' : 'Harvested Date'}</span>
                     </div>
                     <p className="text-xl text-white font-semibold pl-8 mt-1">
-                      {harvestDate.toLocaleDateString(undefined, { weekday: 'short', month: 'long', day: 'numeric', year: 'numeric' })}
+                      {formatDate(item.expected_harvest_date)}
                     </p>
-                    {daysToHarvest > 0 && daysToHarvest <= 14 && (
+                    {isPreOrder && daysToHarvest > 0 && (
                       <p className="text-sm text-yellow-400 pl-8 mt-2 flex items-center gap-1 font-medium">
-                        <FiClock size={12} /> Harvesting in {daysToHarvest} days!
+                        <FiClock size={12} /> {daysToHarvest} days left until harvest
                       </p>
                     )}
                   </div>
@@ -213,11 +226,11 @@ const MarketplaceItemDetails = () => {
 
           {/* Checkout Card */}
           <div className="lg:col-span-4" data-aos="fade-up" data-aos-delay="100">
-            <div className="bg-green-800/30 backdrop-blur-md rounded-3xl p-8 border border-green-400/30 shadow-2xl sticky top-28">
+            <div className={`backdrop-blur-md rounded-3xl p-8 border shadow-2xl sticky top-28 ${isPreOrder ? 'bg-blue-900/20 border-blue-400/30' : 'bg-green-800/30 border-green-400/30'}`}>
               <div className="mb-8">
-                <p className="text-green-300 font-medium mb-1">Price per kg</p>
+                <p className={`${isPreOrder ? 'text-blue-300' : 'text-green-300'} font-medium mb-1`}>Price per kg</p>
                 <div className="flex items-end gap-2">
-                  <span className="text-5xl font-extrabold text-green-400 tracking-tight">
+                  <span className={`text-5xl font-extrabold tracking-tight ${isPreOrder ? 'text-blue-400' : 'text-green-400'}`}>
                     {formatCurrency(item.price_per_kg)}
                   </span>
                 </div>
@@ -225,7 +238,7 @@ const MarketplaceItemDetails = () => {
 
               <div className="space-y-4 mb-8">
                 <div className="flex justify-between pb-4 border-b border-green-700/50">
-                  <span className="text-green-200">Total Stock Available</span>
+                  <span className="text-green-200">{isPreOrder ? 'Estimated Yield' : 'Total Available'}</span>
                   <span className="text-white font-bold text-lg">{item.available_quantity_kg} kg</span>
                 </div>
                 <div className="flex justify-between pb-4 border-b border-green-700/50">
@@ -233,8 +246,10 @@ const MarketplaceItemDetails = () => {
                   <span className="text-white font-bold">1 kg</span>
                 </div>
                 <div className="flex justify-between pb-4 border-b border-green-700/50">
-                  <span className="text-green-200">Farming Status</span>
-                  <span className="text-white font-bold capitalize">{item.planting_status || 'Harvested'}</span>
+                  <span className="text-green-200">Order Type</span>
+                  <span className={`font-bold ${isPreOrder ? 'text-blue-400' : 'text-green-400'}`}>
+                    {isPreOrder ? 'Pre-order Booking' : 'Direct Purchase'}
+                  </span>
                 </div>
               </div>
 
@@ -243,23 +258,31 @@ const MarketplaceItemDetails = () => {
                   variant="primary"
                   size="lg"
                   onClick={handleBuyNow}
-                  className="w-full bg-green-500 hover:bg-green-400 text-green-950 font-bold text-lg py-4 shadow-xl shadow-green-500/20 transition-all hover:scale-[1.02]"
-                  disabled={!isAvailable}
+                  className={`w-full font-bold text-lg py-4 shadow-xl transition-all hover:scale-[1.02] ${
+                    isPreOrder 
+                      ? 'bg-blue-500 hover:bg-blue-400 text-white shadow-blue-500/20' 
+                      : 'bg-green-500 hover:bg-green-400 text-green-950 shadow-green-500/20'
+                  }`}
+                  disabled={!isStockAvailable}
                 >
-                  Buy Now
+                  {isPreOrder ? 'Book Now' : 'Buy Now'}
                 </Button>
                 <Button
                   variant="outline"
                   size="lg"
                   onClick={handleAddToCart}
-                  className="w-full border-2 border-green-500 text-green-400 hover:bg-green-500 hover:text-white font-bold text-lg py-4 transition-all"
-                  disabled={!isAvailable}
+                  className={`w-full border-2 font-bold text-lg py-4 transition-all ${
+                    isPreOrder
+                      ? 'border-blue-500 text-blue-400 hover:bg-blue-500 hover:text-white'
+                      : 'border-green-500 text-green-400 hover:bg-green-500 hover:text-white'
+                  }`}
+                  disabled={!isStockAvailable}
                 >
-                  Add to Cart
+                  {isPreOrder ? 'Book Order' : 'Add to Cart'}
                 </Button>
               </div>
               
-              {!isAvailable && (
+              {!isStockAvailable && (
                 <p className="text-center text-red-300 mt-4 font-medium">
                   This item is currently out of stock.
                 </p>

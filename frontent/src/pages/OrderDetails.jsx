@@ -221,8 +221,12 @@ const OrderDetails = () => {
             <div>
               <h2 className="text-2xl font-bold text-white mb-2">Order #{order.id}</h2>
               <p className="text-green-300">
-                Placed on {formatDate(order.transaction_date, 'long')}
+                Placed on {formatDate(order.transaction_date)}
               </p>
+              <div className="mt-3 flex items-center gap-2 text-green-400 font-semibold bg-green-950/50 w-fit px-4 py-2 rounded-xl border border-green-400/20">
+                <IoTimeOutline />
+                <span>Expected Availability: {formatDate(order.expected_harvest_date)}</span>
+              </div>
             </div>
             
             <div className="flex space-x-3">
@@ -293,7 +297,7 @@ const OrderDetails = () => {
             </div>
           </div>
 
-          {/* Shipping Information */}
+          {/* Delivery Information */}
           <div className="bg-green-900/30 backdrop-blur-sm rounded-3xl p-6 border border-green-400/20" data-aos="fade-up">
             <h3 className="text-lg font-semibold text-white mb-4">Delivery Information</h3>
             
@@ -302,14 +306,14 @@ const OrderDetails = () => {
                 <IoLocationOutline className="text-green-400 mt-1" size={20} />
                 <div>
                   <p className="text-sm text-green-300">Delivery Address</p>
-                  <p className="text-white">{order.delivery_address}</p>
+                  <p className="text-white">{order.delivery_address || 'No address provided'}</p>
                 </div>
               </div>
               
               <div className="flex items-start gap-3">
                 <IoCallOutline className="text-green-400 mt-1" size={20} />
                 <div>
-                  <p className="text-sm text-green-300">Phone Number</p>
+                  <p className="text-sm text-green-300">Buyer Phone Number</p>
                   <p className="text-white">{order.payment_phone_number}</p>
                 </div>
               </div>
@@ -320,6 +324,37 @@ const OrderDetails = () => {
                   <p className="text-white text-sm">{order.notes}</p>
                 </div>
               )}
+            </div>
+          </div>
+
+          {/* Farmer Information */}
+          <div className="bg-green-900/30 backdrop-blur-sm rounded-3xl p-6 border border-green-400/20" data-aos="fade-up">
+            <h3 className="text-lg font-semibold text-white mb-4">Farmer Information</h3>
+            
+            <div className="space-y-4">
+              <div className="flex items-start gap-3">
+                <IoPersonOutline className="text-green-400 mt-1" size={20} />
+                <div>
+                  <p className="text-sm text-green-300">Farmer Name</p>
+                  <p className="text-white font-semibold">{order.farmer_name || 'N/A'}</p>
+                </div>
+              </div>
+              
+              <div className="flex items-start gap-3">
+                <IoCallOutline className="text-green-400 mt-1" size={20} />
+                <div>
+                  <p className="text-sm text-green-300">Contact Number</p>
+                  <p className="text-white">{order.farmer_phone || 'N/A'}</p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3">
+                <IoLocationOutline className="text-green-400 mt-1" size={20} />
+                <div>
+                  <p className="text-sm text-green-300">Farm Region</p>
+                  <p className="text-white">{order.region_name || 'N/A'}</p>
+                </div>
+              </div>
             </div>
           </div>
 

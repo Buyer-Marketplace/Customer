@@ -41,6 +41,20 @@ export const ordersApi = {
   },
 
   /**
+   * Get Single Order Details
+   * GET /api/buyer/orders/:id
+   */
+  getOrderById: async (id) => {
+    try {
+      const response = await axiosInstance.get(API_ENDPOINTS.ORDERS.GET_BY_ID(id));
+      return response.data.data;
+    } catch (error) {
+      console.error('Error fetching order details:', error);
+      throw error;
+    }
+  },
+
+  /**
    * Place an Order (M-Pesa STK Push)
    * POST /api/buyer/orders/place
    * Protected - Requires Authentication

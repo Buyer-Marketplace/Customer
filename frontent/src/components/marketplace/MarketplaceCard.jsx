@@ -2,16 +2,25 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { FiMapPin, FiStar, FiClock } from 'react-icons/fi';
 import { GiFarmer } from 'react-icons/gi';
-import { IoLeaf } from 'react-icons/io5';
+import { IoLeaf, IoCalendarOutline } from 'react-icons/io5';
 import Button from '../ui/Button';
 import Badge from '../ui/Badge';
 import { formatCurrency } from '../../utils/formatCurrency';
 import { formatDate } from '../../utils/formatDate';
 
 const MarketplaceCard = ({ item, onAddToCart, onBuyNow }) => {
-  const isAvailable = item.listing_status === 'Active' && item.available_quantity_kg > 0;
+  const isStockAvailable = item.listing_status === 'Active' && item.available_quantity_kg > 0;
   const harvestDate = new Date(item.expected_harvest_date);
   const today = new Date();
+  
+  // Normalize dates to remove time for accurate comparison
+  const todayNormalized = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const harvestNormalized = new Date(harvestDate.getFullYear(), harvestDate.getMonth(), harvestDate.getDate());
+  
+  const isHarvested = harvestNormalized <= todayNormalized;
+  const isAvailableNow = isStockAvailable && isHarvested;
+  const isPreOrder = isStockAvailable && !isHarvested;
+  
   const daysToHarvest = Math.ceil((harvestDate - today) / (1000 * 60 * 60 * 24));
 
   return (
@@ -31,6 +40,12 @@ const MarketplaceCard = ({ item, onAddToCart, onBuyNow }) => {
             <Badge variant="success" size="sm" className="bg-green-600/90 backdrop-blur-sm">
               <IoLeaf className="inline mr-1" size={12} />
               Organic
+            </Badge>
+          )}
+          {isPreOrder && (
+            <Badge variant="info" size="sm" className="bg-blue-600/90 backdrop-blur-sm">
+              <IoCalendarOutline className="inline mr-1" size={12} />
+              Pre-order
             </Badge>
           )}
           {daysToHarvest <= 7 && daysToHarvest > 0 && (
@@ -81,25 +96,28 @@ const MarketplaceCard = ({ item, onAddToCart, onBuyNow }) => {
           </div>
           <div className="text-right">
             <span className="text-sm text-green-300">{item.available_quantity_kg} kg</span>
-            <p className="text-xs text-green-300/50">available</p>
+            <p className="text-xs text-green-300/50">
+              {isPreOrder ? 'est. yield' : 'available'}
+            </p>
           </div>
         </div>
 
         {/* Harvest Date */}
-        <div className="bg-green-950/50 rounded-lg p-2 mb-3">
-          <p className="text-xs text-green-300">
-            Harvest: {formatDate(item.expected_harvest_date)}
+        <div className={`rounded-lg p-2 mb-3 ${isPreOrder ? 'bg-blue-900/30 border border-blue-400/20' : 'bg-green-950/50'}`}>
+          <p className={`text-xs ${isPreOrder ? 'text-blue-300' : 'text-green-300'}`}>
+            <FiClock className="inline mr-1" />
+            {isPreOrder ? 'Expected Harvest:' : 'Harvested on:'} {formatDate(item.expected_harvest_date)}
           </p>
         </div>
 
         {/* Status Badge */}
         <div className="mb-3">
           <Badge 
-            variant={isAvailable ? 'success' : 'default'} 
+            variant={isAvailableNow ? 'success' : isPreOrder ? 'info' : 'default'} 
             size="sm"
-            className={isAvailable ? 'bg-green-600/80' : 'bg-gray-600/80'}
+            className={isAvailableNow ? 'bg-green-600/80' : isPreOrder ? 'bg-blue-600/80' : 'bg-gray-600/80'}
           >
-            {isAvailable ? 'Available Now' : 'Sold Out'}
+            {isAvailableNow ? 'Available Now' : isPreOrder ? 'Booking Open' : 'Sold Out'}
           </Badge>
         </div>
 
@@ -109,19 +127,25 @@ const MarketplaceCard = ({ item, onAddToCart, onBuyNow }) => {
             variant="outline"
             size="sm"
             onClick={() => onAddToCart(item)}
-            className="flex-1 border-2 border-green-400 text-green-300 hover:bg-green-800/30 hover:text-white transition-all"
-            disabled={!isAvailable}
+            className={`flex-1 border-2 transition-all ${
+              isPreOrder 
+                ? 'border-blue-400 text-blue-300 hover:bg-blue-800/30 hover:text-white' 
+                : 'border-green-400 text-green-300 hover:bg-green-800/30 hover:text-white'
+            }`}
+            disabled={!isStockAvailable}
           >
-            Add to Cart
+            {isPreOrder ? 'Book Order' : 'Add to Cart'}
           </Button>
           <Button
             variant="primary"
             size="sm"
             onClick={() => onBuyNow(item)}
-            className="flex-1 bg-green-600 hover:bg-green-700 text-white transition-all"
-            disabled={!isAvailable}
+            className={`flex-1 transition-all ${
+              isPreOrder ? 'bg-blue-600 hover:bg-blue-700' : 'bg-green-600 hover:bg-green-700'
+            } text-white`}
+            disabled={!isStockAvailable}
           >
-            Buy Now
+            {isPreOrder ? 'Book Now' : 'Buy Now'}
           </Button>
         </div>
       </div>
