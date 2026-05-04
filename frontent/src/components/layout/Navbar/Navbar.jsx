@@ -166,6 +166,7 @@ const Navbar = () => {
     { name: 'Categories', path: '/categories' },
     { name: 'Crops', path: '/crops' },
     { name: 'Pre-Orders', path: '/preorders' },
+    { name: 'Help', path: '/help' },
   ];
 
   return (

@@ -19,6 +19,7 @@ const Orders = React.lazy(() => import('../pages/Orders'));
 const OrderDetails = React.lazy(() => import('../pages/OrderDetails'));
 const Wishlist = React.lazy(() => import('../pages/Wishlist'));
 const Profile = React.lazy(() => import('../pages/Profile'));
+const Help = React.lazy(() => import('../pages/Help'));
 
 // Pre-order pages
 const PreOrders = React.lazy(() => import('../pages/PreOrders'));
@@ -118,6 +119,9 @@ const AppRoutes = () => {
           
           {/* Location Page */}
           <Route path="/location" element={<Location />} />
+          
+          {/* Help Page */}
+          <Route path="/help" element={<Help />} />
           
           {/* ========== PROTECTED PAGES ========== */}
           
