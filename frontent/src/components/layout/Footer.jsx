@@ -128,7 +128,7 @@ const Footer = () => {
 
         {/* Bottom Bar */}
         <div className="flex flex-col items-center justify-center pt-6 mt-6 border-t border-green-800 text-xs text-green-300/50 text-center">
-          <p>© {currentYear} Agritrace Market. All rights reserved.</p>
+          <p>© 2026 Agritrace Market. All rights reserved.</p>
           <div className="flex space-x-4 mt-2">
             <Link to="/privacy" className="hover:text-white transition-colors">
               Privacy Policy

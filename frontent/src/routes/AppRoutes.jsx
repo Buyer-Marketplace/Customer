@@ -20,6 +20,10 @@ const OrderDetails = React.lazy(() => import('../pages/OrderDetails'));
 const Wishlist = React.lazy(() => import('../pages/Wishlist'));
 const Profile = React.lazy(() => import('../pages/Profile'));
 const Help = React.lazy(() => import('../pages/Help'));
+const About = React.lazy(() => import('../pages/About'));
+const Contact = React.lazy(() => import('../pages/Contact'));
+const Privacy = React.lazy(() => import('../pages/Privacy'));
+const Terms = React.lazy(() => import('../pages/Terms'));
 
 // Pre-order pages
 const PreOrders = React.lazy(() => import('../pages/PreOrders'));
@@ -122,6 +126,12 @@ const AppRoutes = () => {
           
           {/* Help Page */}
           <Route path="/help" element={<Help />} />
+
+          {/* New Footer Pages */}
+          <Route path="/about" element={<About />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/privacy" element={<Privacy />} />
+          <Route path="/terms" element={<Terms />} />
           
           {/* ========== PROTECTED PAGES ========== */}
           
